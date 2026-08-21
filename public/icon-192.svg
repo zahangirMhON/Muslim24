@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="50%" stop-color="#022c22"/>
+      <stop offset="100%" stop-color="#042f2e"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#bgGrad)"/>
+  <circle cx="96" cy="96" r="76" fill="none" stroke="url(#goldGrad)" stroke-width="3" opacity="0.6"/>
+  <!-- Crescent Moon -->
+  <path d="M102,46 C68,48 48,78 52,112 C56,144 86,160 114,148 C94,142 80,126 80,104 C80,78 96,56 122,50 C116,47 109,46 102,46 Z" fill="url(#goldGrad)"/>
+  <!-- Star -->
+  <polygon points="126,62 131,74 144,74 133,82 137,94 126,86 115,94 119,82 108,74 121,74" fill="url(#goldGrad)"/>
+  <!-- Mosque Dome Base & Minaret Accent -->
+  <path d="M68,142 L124,142 C120,122 108,110 96,110 C84,110 72,122 68,142 Z" fill="#34d399" opacity="0.85"/>
+  <rect x="93" y="98" width="6" height="14" rx="2" fill="url(#goldGrad)"/>
+</svg>

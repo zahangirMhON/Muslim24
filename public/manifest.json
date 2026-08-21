@@ -1,0 +1,49 @@
+{
+  "name": "ইসলামিক লাইফ ২৪/৭ - Islamic Life 24/7",
+  "short_name": "Islamic Life",
+  "description": "২৪/৭ নিরবচ্ছিন্ন ইসলামিক রেডিও, নামাজের সময়সূচি, আজান, দোয়া, জিকির ও অফলাইন পঞ্জিকা",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#022c22",
+  "theme_color": "#064e3b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "education", "utilities"],
+  "shortcuts": [
+    {
+      "name": "নামাজের সময়",
+      "short_name": "Prayer Times",
+      "description": "আজকের নামাজের ওয়াক্ত ও আজান",
+      "url": "/#prayer",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "তাসবিহ ও জিকির",
+      "short_name": "Tasbih",
+      "description": "ডিজিটাল তাসবিহ কাউন্টার ও মাসনূন আজকার",
+      "url": "/#dhikr",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "২৪/৭ অডিও",
+      "short_name": "24/7 Audio",
+      "description": "২৪/৭ নিরবচ্ছিন্ন কুরআন তিলাওয়াত ও বয়ান",
+      "url": "/#media",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

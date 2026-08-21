@@ -1,0 +1,35 @@
+# Netlify Configuration for Islamic Life 24/7 (React + Vite + TypeScript)
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# Single Page Application (SPA) Routing & Fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Service Worker Cache Header - Ensure clients always get latest SW
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "max-age=0, no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+# Web App Manifest & Icons Caching
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Assets Immutable Caching
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

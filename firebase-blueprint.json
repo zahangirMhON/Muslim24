@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profiles",
+      "description": "User profile information and settings",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "isAdmin": { "type": "boolean" },
+        "streakDays": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "displayName"]
+    },
+    "userActivities": {
+      "title": "User Activity Progress",
+      "description": "Daily Islamic activity tracking, audio listening progress and check marks",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "completedTaskIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dailyListeningMinutes": { "type": "number" },
+        "notes": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "date"]
+    },
+    "userSchedules": {
+      "title": "Custom Schedules & Playlists",
+      "description": "User customized 24/7 radio schedule and custom playlist preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "scheduleName": { "type": "string" },
+        "preferredCategories": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "customItemsJson": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "scheduleName"]
+    }
+  }
+}
