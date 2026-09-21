@@ -31,6 +31,7 @@ import {
   getPreloadedAsma
 } from '../services/amalCardDataPreloader';
 import { AsmaulHusnaItem, EvidenceLevel } from '../data/asmaulHusnaData';
+import { getAsmaVirtueDetails } from '../data/asmaVirtuesData';
 import { loadMasteryState, saveMasteryState, UserAsmaProgress } from '../utils/asmaulHusnaMastery';
 import { triggerHaptic, launchDhikrInTasbih } from '../utils/haptics';
 import { playAsmaulHusnaCompleteAudio, stopAsmaulHusnaAudio } from '../utils/asmaulHusnaAudio';
@@ -69,7 +70,28 @@ export const AmalCardModal: React.FC<AmalCardModalProps> = ({
 
   const currentCard: UnifiedAmalCardData | null = useMemo(() => {
     if (!rawData) return null;
-    return normalizeGenericToAmalCard(rawData);
+    const base = normalizeGenericToAmalCard(rawData);
+    const asmaIdNum = base.asmaId || (typeof base.id === 'string' && base.id.startsWith('asma-') ? parseInt(base.id.replace('asma-', ''), 10) : undefined);
+    if (asmaIdNum && !isNaN(asmaIdNum)) {
+      const details = getAsmaVirtueDetails(
+        asmaIdNum,
+        base.arabicText,
+        base.transliterationBn,
+        base.meaningBn,
+        base.categoryBn
+      );
+      return {
+        ...base,
+        asmaId: asmaIdNum,
+        hadithVirtueBn: base.hadithVirtueBn || details.hadithVirtueBn,
+        testedVirtueBn: base.testedVirtueBn || details.testedVirtueBn,
+        testedOutcomeBn: base.testedOutcomeBn || details.testedOutcomeBn,
+        contextExplanationBn: base.contextExplanationBn || details.contextExplanationBn,
+        detailedAmalRuleBn: base.detailedAmalRuleBn || details.detailedAmalRuleBn,
+        amalConditionsBn: (base.amalConditionsBn && base.amalConditionsBn.length > 0) ? base.amalConditionsBn : details.amalConditionsBn,
+      };
+    }
+    return base;
   }, [rawData]);
 
   // Listen for global window events to open the modal from anywhere
@@ -107,8 +129,10 @@ export const AmalCardModal: React.FC<AmalCardModalProps> = ({
     };
 
     window.addEventListener('open-amal-card-modal', handleOpenGlobalModal);
+    window.addEventListener('open-amal-card', handleOpenGlobalModal);
     return () => {
       window.removeEventListener('open-amal-card-modal', handleOpenGlobalModal);
+      window.removeEventListener('open-amal-card', handleOpenGlobalModal);
     };
   }, []);
 
@@ -558,36 +582,138 @@ export const AmalCardModal: React.FC<AmalCardModalProps> = ({
           </button>
         </div>
 
-        {/* Evidence & References */}
+        {/* 1. Authentic Hadith Virtue & Proof */}
         <div className="space-y-1.5">
-          <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>কুরআন ও সহিহ দলীল:</span>
-          </h4>
-          <div className="bg-emerald-950/70 p-3 rounded-xl border border-emerald-800/60 space-y-1 text-xs">
-            <div>
-              <span className="font-bold text-emerald-300">কুরআন আয়াত রেফারেন্স:</span>{' '}
-              <span className="text-emerald-100">{currentCard.quranRefBn || 'সূরা আল-আ\'রাফ: ১৮০, সূরা আল-হাশর: ২২-২৪'}</span>
-            </div>
-            <div>
-              <span className="font-bold text-cyan-300">সহিহ হাদিস রেফারেন্স:</span>{' '}
-              <span className="text-emerald-100">{currentCard.hadithRefBn || 'সহিহ বুখারী ২৭৩৬, সহিহ মুসলিম ২৬৭৭'}</span>
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
+              <BookOpen className="w-4 h-4 text-cyan-400" />
+              <span>হাদীস অনুযায়ী ফযীলত ও দলীল:</span>
+            </h4>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-700/60 text-cyan-300">
+              সহিহ দলীলভিত্তিক
+            </span>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-950/90 to-teal-950/80 p-3.5 rounded-xl border border-teal-800/70 space-y-2">
+            <p className="text-xs text-emerald-100 leading-relaxed font-medium">
+              {currentCard.hadithVirtueBn || currentCard.virtueBn}
+            </p>
+            <div className="pt-1.5 border-t border-teal-800/50 space-y-1 text-[11px]">
+              {currentCard.hadithRefBn && (
+                <div className="flex items-start gap-1 text-cyan-200">
+                  <span className="font-bold text-cyan-400 shrink-0">📜 হাদীস সনদ/রেফারেন্স:</span>
+                  <span>{currentCard.hadithRefBn}</span>
+                </div>
+              )}
+              {currentCard.quranRefBn && (
+                <div className="flex items-start gap-1 text-emerald-300">
+                  <span className="font-bold text-emerald-400 shrink-0">📖 কুরআনিক দলীল:</span>
+                  <span>{currentCard.quranRefBn}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Deeper Meaning & Virtue */}
+        {/* 2. Tested Virtue & Proven Practical Outcomes (Mujarrobat) */}
         <div className="space-y-1.5">
-          <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>অর্থ, তাৎপর্য ও প্রমাণিত ফজিলত:</span>
-          </h4>
-          <p className="text-xs text-emerald-100 leading-relaxed bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/40">
-            {currentCard.deeperMeaningBn || currentCard.virtueBn}
-          </p>
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>পরীক্ষিত ফযীলত ও বাস্তব পরীক্ষিত ফলাফল:</span>
+            </h4>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-950/80 border border-amber-700/60 text-amber-300">
+              সালাফদের পরীক্ষিত আমল
+            </span>
+          </div>
+          <div className="bg-gradient-to-br from-amber-950/40 via-emerald-950/70 to-emerald-950/90 p-3.5 rounded-xl border border-amber-700/50 space-y-2.5">
+            <div>
+              <span className="text-[11px] font-bold text-amber-300 block mb-0.5">🌟 পরীক্ষিত ফযীলত:</span>
+              <p className="text-xs text-amber-100/90 leading-relaxed">
+                {currentCard.testedVirtueBn || currentCard.virtueBn}
+              </p>
+            </div>
+            {currentCard.testedOutcomeBn && (
+              <div className="bg-amber-400/10 p-2.5 rounded-lg border border-amber-400/30">
+                <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1 mb-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  বাস্তব পরীক্ষিত সুনির্দিষ্ট ফলাফল:
+                </span>
+                <p className="text-xs text-emerald-100 font-medium leading-relaxed">
+                  {currentCard.testedOutcomeBn}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* How to Call Allah (Dua) */}
+        {/* 3. Context Explanation of the Virtue & Spiritual Meaning */}
+        {(currentCard.contextExplanationBn || currentCard.deeperMeaningBn) && (
+          <div className="space-y-1.5">
+            <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📖</span>
+              <span>ফযীলতের প্রেক্ষাপট ও আত্মিক তাৎপর্য ব্যাখ্যা:</span>
+            </h4>
+            <div className="text-xs text-emerald-100 leading-relaxed bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/50">
+              {currentCard.contextExplanationBn || currentCard.deeperMeaningBn}
+            </div>
+          </div>
+        )}
+
+        {/* 4. Detailed Amal Routine & Guidelines */}
+        <div className="space-y-1.5">
+          <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+            <Target className="w-4 h-4 text-amber-400" />
+            <span>বিস্তারিত আমল পদ্ধতি ও জিকিরের নিয়মাবলী:</span>
+          </h4>
+          <div className="bg-emerald-950/80 p-3.5 rounded-xl border border-emerald-700/60 space-y-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+              <div className="bg-emerald-900/60 p-2 rounded-lg border border-emerald-800/60 flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                <div>
+                  <span className="text-emerald-300 block font-semibold">আমলের উত্তম সময়:</span>
+                  <span className="text-emerald-100 font-bold">{currentCard.recommendedTimeBn}</span>
+                </div>
+              </div>
+              <div className="bg-emerald-900/60 p-2 rounded-lg border border-emerald-800/60 flex items-center gap-2">
+                <Target className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                <div>
+                  <span className="text-emerald-300 block font-semibold">নির্ধারিত পাঠ সংখ্যা:</span>
+                  <span className="text-amber-300 font-bold">{toBengaliDigits(currentCard.recommendedCount)} বার (বা ততোধিক)</span>
+                </div>
+              </div>
+            </div>
+            {currentCard.detailedAmalRuleBn && (
+              <div className="pt-1">
+                <span className="text-[11px] font-bold text-emerald-300 block mb-0.5">📿 আমলের নিয়ম:</span>
+                <p className="text-xs text-emerald-100 leading-relaxed">
+                  {currentCard.detailedAmalRuleBn}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 5. Essential Conditions & Etiquette (Adab) */}
+        {currentCard.amalConditionsBn && currentCard.amalConditionsBn.length > 0 && (
+          <div className="space-y-1.5">
+            <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>আমল কবুল ও পরীক্ষিত ফলাফল লাভের শর্তাবলী ও আদব:</span>
+            </h4>
+            <div className="bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/50">
+              <ul className="space-y-1.5 text-xs text-emerald-100">
+                {currentCard.amalConditionsBn.map((cond, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>{cond}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* 6. How to Call Allah (Dua) */}
         {currentCard.duaWithThisNameBn && (
           <div className="space-y-1.5">
             <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -600,12 +726,12 @@ export const AmalCardModal: React.FC<AmalCardModalProps> = ({
           </div>
         )}
 
-        {/* Character Transformation Lesson */}
+        {/* 7. Character Transformation Lesson */}
         {currentCard.characterLessonBn && (
           <div className="space-y-1.5">
             <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
               <span>🧠</span>
-              <span>এই আমল/নাম থেকে চরিত্র গঠনের শিক্ষা:</span>
+              <span>এই নাম/আমল থেকে চরিত্র গঠনের শিক্ষা:</span>
             </h4>
             <p className="text-xs text-emerald-200 leading-relaxed bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/40">
               {currentCard.characterLessonBn}
@@ -613,7 +739,7 @@ export const AmalCardModal: React.FC<AmalCardModalProps> = ({
           </div>
         )}
 
-        {/* Practical Daily Action Task */}
+        {/* 8. Practical Daily Action Task */}
         {currentCard.lifeApplicationTaskBn && (
           <div className="space-y-1.5 bg-amber-400/10 p-3.5 rounded-xl border border-amber-400/30">
             <h4 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">

@@ -38,7 +38,9 @@ async function startServer() {
         confidenceScore: ragResult.confidenceScore,
         isHighRisk: ragResult.isHighRisk,
         disclaimer: ragResult.disclaimer,
-        refused: ragResult.refused
+        refused: ragResult.refused,
+        scheduleTasks: ragResult.scheduleTasks,
+        scheduleTitle: ragResult.scheduleTitle
       });
     } catch (err: any) {
       console.error('Error handling chat request:', err);

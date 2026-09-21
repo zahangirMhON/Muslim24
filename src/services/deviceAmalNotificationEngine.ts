@@ -180,7 +180,9 @@ export class DeviceAmalNotificationEngine {
     // 1. Try through Service Worker Registration (Highest priority for lockscreen waking)
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.ready;
+        const swReadyPromise = navigator.serviceWorker.ready;
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1200));
+        const registration = await Promise.race([swReadyPromise, timeoutPromise]);
         if (registration && registration.showNotification) {
           await registration.showNotification(title, options);
           return true;
@@ -192,8 +194,10 @@ export class DeviceAmalNotificationEngine {
 
     // 2. Fallback to standard window.Notification
     try {
-      new Notification(title, options);
-      return true;
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, options);
+        return true;
+      }
     } catch (e) {
       console.warn('Failed to trigger window Notification:', e);
       return false;
@@ -235,14 +239,12 @@ export class DeviceAmalNotificationEngine {
     // 1. Initialize Web Audio on user click
     notificationSound.initContext();
 
-    // 2. If permission not requested yet, prompt in background without blocking
-    this.checkPermission().then(async (perm) => {
-      if (perm === 'default') {
-        try {
-          await this.requestPermission();
-        } catch (e) {}
-      }
-    });
+    // 2. Request permission directly on user gesture if not granted
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        Notification.requestPermission().catch(() => {});
+      } catch (e) {}
+    }
 
     // Clear any existing countdown
     if (this.countdownTimer) {

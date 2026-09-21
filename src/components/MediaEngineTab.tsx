@@ -32,7 +32,9 @@ import {
   Sliders,
   Edit3,
   ListPlus,
-  CheckCircle2
+  CheckCircle2,
+  Brain,
+  Share2
 } from 'lucide-react';
 import { MediaScheduleItem, StreamStatus, DEFAULT_247_SCHEDULE } from '../services/mediaEngine';
 import { ALL_114_SURAHS, SurahItem } from '../data/allSurahsData';
@@ -45,6 +47,9 @@ import { SpiritualDhikrSection } from './SpiritualDhikrSection';
 import { MediaCategorySuggestions } from './MediaCategorySuggestions';
 import { QuickScheduleSearchModal } from './QuickScheduleSearchModal';
 import { SpiritualDhikrItem } from '../data/spiritualDhikrData';
+import { AudioFolderPlaylistHub } from './AudioFolderPlaylistHub';
+import { CareRoutineOperatingSystem } from './CareRoutineOperatingSystem';
+import { CareReportShareView } from './CareReportShareView';
 
 interface Props {
   lang: 'bn' | 'en' | 'ar';
@@ -53,6 +58,8 @@ interface Props {
   onPlayAudio?: (title: string, url: string) => void;
   currentlyPlayingUrl?: string;
   isPlaying?: boolean;
+  onToast?: (msg: string) => void;
+  initialMediaSubSection?: 'radio' | 'care_os' | 'care_report';
 }
 
 // Helper function to extract YouTube video ID from various YouTube URL formats
@@ -168,8 +175,17 @@ export const MediaEngineTab: React.FC<Props> = ({
   onToggleAudioMode,
   onPlayAudio,
   currentlyPlayingUrl,
-  isPlaying: isGlobalPlaying
+  isPlaying: isGlobalPlaying,
+  onToast,
+  initialMediaSubSection = 'radio'
 }) => {
+  const [activeMediaSection, setActiveMediaSection] = useState<'radio' | 'care_os' | 'care_report'>(initialMediaSubSection);
+
+  useEffect(() => {
+    if (initialMediaSubSection) {
+      setActiveMediaSection(initialMediaSubSection);
+    }
+  }, [initialMediaSubSection]);
   const defaultStatus: StreamStatus = {
     isLive: true,
     activeItem: DEFAULT_247_SCHEDULE[0],
@@ -618,6 +634,76 @@ export const MediaEngineTab: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       
+      {/* 🧭 ২৪/৭ মিডিয়া, রেডিও ও কেয়ার অপারেটিং সিস্টেম সাব-নেভিগেশন */}
+      <div className="flex items-center gap-2 overflow-x-auto p-1.5 rounded-2xl bg-emerald-950/90 border-2 border-emerald-700/80 shadow-xl scrollbar-none">
+        <button
+          onClick={() => setActiveMediaSection('radio')}
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
+            activeMediaSection === 'radio'
+              ? 'bg-amber-400 text-emerald-950 font-black shadow-md scale-105'
+              : 'text-emerald-200 hover:bg-emerald-900/60'
+          }`}
+        >
+          <Radio className="w-4 h-4 text-amber-500" />
+          <span>📻 ২৪/৭ ইসলামিক রেডিও ও সম্প্রচার</span>
+        </button>
+
+        <button
+          onClick={() => setActiveMediaSection('care_os')}
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
+            activeMediaSection === 'care_os'
+              ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-emerald-950 font-black shadow-lg scale-105'
+              : 'text-emerald-200 hover:bg-emerald-900/60'
+          }`}
+        >
+          <Brain className="w-4 h-4 text-pink-400 animate-pulse" />
+          <span>🧠 ২৪/৭ AI কেয়ার ও রুটিন OS</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-600 text-white font-black">
+            সিকিউর
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveMediaSection('care_report')}
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
+            activeMediaSection === 'care_report'
+              ? 'bg-amber-400 text-emerald-950 font-black shadow-md scale-105'
+              : 'text-emerald-200 hover:bg-emerald-900/60'
+          }`}
+        >
+          <Share2 className="w-4 h-4 text-cyan-400" />
+          <span>📊 কেয়ার রিপোর্ট ও শেয়ারিং (৭ দিন / ১ মাস)</span>
+        </button>
+      </div>
+
+      {/* 🧠 ২৪/৭ AI কেয়ার, লাইফ ও রুটিন অপারেটিং সিস্টেম (সিকিউর কন্ট্রোল প্যানেল) */}
+      {activeMediaSection === 'care_os' && (
+        <CareRoutineOperatingSystem
+          onToast={onToast}
+          onOpenReport={() => setActiveMediaSection('care_report')}
+        />
+      )}
+
+      {/* 📊 কেয়ার ও রুটিন রিপোর্ট শেয়ারিং পেজ (৭ দিন, ১ সপ্তাহ, ১ মাস) */}
+      {activeMediaSection === 'care_report' && (
+        <CareReportShareView
+          onBackToApp={() => setActiveMediaSection('radio')}
+          onToast={onToast}
+          initialRange="7d"
+        />
+      )}
+
+      {/* 📻 ২৪/৭ লাইভ মিডিয়া রেডিও ও প্লেলিস্ট সেকশন */}
+      {activeMediaSection === 'radio' && (
+        <>
+          {/* 📁 ফোল্ডার ভিত্তিক ইসলামিক প্লেলিস্ট ও হিসনুল মুসলিম লাইব্রেরি */}
+          <AudioFolderPlaylistHub
+            onPlayAudio={triggerPlayAudio}
+            currentlyPlayingUrl={currentlyPlayingUrl}
+            isPlaying={isGlobalPlaying}
+            lang={lang}
+          />
+
       {/* 24/7 Live Radio Player Banner */}
       <div className="bg-gradient-to-br from-emerald-900 via-teal-950 to-emerald-950 border-2 border-amber-400/60 rounded-2xl p-5 sm:p-6 text-white shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
@@ -892,14 +978,19 @@ export const MediaEngineTab: React.FC<Props> = ({
               );
             }
 
-            return (
-              <audio
-                src={currentUrl}
-                autoPlay
-                onError={handleStreamError}
-                className="hidden"
-              />
-            );
+            // Only render fallback audio if onPlayAudio is not provided (avoids duplicate playback)
+            if (!onPlayAudio) {
+              return (
+                <audio
+                  src={currentUrl}
+                  autoPlay
+                  onError={handleStreamError}
+                  className="hidden"
+                />
+              );
+            }
+
+            return null;
           })()}
 
           {/* Bengali Translation, Tafsir & Spiritual Guidance Panel (Collapsible Floating Dropdown) */}
@@ -2112,6 +2203,8 @@ export const MediaEngineTab: React.FC<Props> = ({
           currentlyPlayingUrl={currentlyPlayingUrl || selectedPreviewItem?.audioStreamUrl}
           isPlaying={isGlobalPlaying || isPlaying}
         />
+      )}
+        </>
       )}
 
     </div>

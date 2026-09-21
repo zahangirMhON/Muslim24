@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Clock,
   Bell,
@@ -1069,8 +1070,13 @@ export const PrayerCard: React.FC<PrayerCardProps> = ({
             const rakat = item.rakatBreakdown;
 
             return (
-              <div
+              <motion.div
                 key={item.key}
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
                 className={`p-3.5 rounded-xl border transition relative flex flex-col justify-between cursor-pointer ${
                   isCurrent
                     ? 'bg-amber-500/25 border-amber-400 shadow-lg ring-2 ring-amber-400/50'
@@ -1220,7 +1226,7 @@ export const PrayerCard: React.FC<PrayerCardProps> = ({
                     )}
                   </div>
                 )}
-              </div>
+              </motion.div>
             );
           })}
         </div>

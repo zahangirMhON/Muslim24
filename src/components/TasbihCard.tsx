@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   RotateCcw,
   CheckCircle2,
@@ -479,7 +480,9 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
 
         {/* 3 Unified Section Tabs */}
         <div className="flex items-center gap-1.5 bg-emerald-950/90 p-1 rounded-xl border border-emerald-700/60 text-xs font-bold self-start md:self-auto overflow-x-auto max-w-full">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('tasbih')}
             className={`px-3.5 py-1.5 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'tasbih'
@@ -488,9 +491,11 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
             }`}
           >
             <span>📿 ডিজিটাল তসবিহ</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('dailyDuas')}
             className={`px-3.5 py-1.5 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'dailyDuas'
@@ -499,9 +504,11 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
             }`}
           >
             <span>🤲 দৈনন্দিন দোয়া ও ছোট আমল</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('asmaulHusna')}
             className={`px-3.5 py-1.5 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'asmaulHusna'
@@ -510,7 +517,7 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
             }`}
           >
             <span>✨ ৯৯ নাম ও আমল</span>
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -568,10 +575,33 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
                   </button>
                 </div>
 
-                <p className="text-xs text-emerald-100/90 leading-relaxed max-w-2xl pt-0.5">
-                  <strong className="text-amber-200">ফজিলত ও আমল: </strong>
-                  {suggestedAsma.virtueBn}
-                </p>
+                {/* Hadith and Tested Virtue previews */}
+                <div className="space-y-1.5 pt-1 text-xs max-w-2xl">
+                  <div className="bg-emerald-900/60 p-2.5 rounded-xl border border-teal-800/60 space-y-0.5">
+                    <span className="text-[11px] font-bold text-cyan-300 flex items-center gap-1">
+                      <BookOpen className="w-3 h-3 text-cyan-400" />
+                      হাদীস অনুযায়ী ফযীলত:
+                    </span>
+                    <p className="text-xs text-emerald-100 leading-relaxed font-medium">
+                      {suggestedAsma.hadithVirtueBn || suggestedAsma.virtueBn}
+                    </p>
+                  </div>
+
+                  <div className="bg-amber-950/40 p-2.5 rounded-xl border border-amber-700/50 space-y-0.5">
+                    <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      পরীক্ষিত ফযীলত ও বাস্তব ফলাফল:
+                    </span>
+                    <p className="text-xs text-amber-100/90 leading-relaxed">
+                      {suggestedAsma.testedVirtueBn || suggestedAsma.virtueBn}
+                    </p>
+                    {suggestedAsma.testedOutcomeBn && (
+                      <p className="text-[11px] text-emerald-200 font-semibold pt-0.5">
+                        ✨ ফলাফল: {suggestedAsma.testedOutcomeBn}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                 <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-amber-200/90 font-medium">
                   <span>📌 <strong>আজ কত বার পড়বেন:</strong> {toBengaliDigits(suggestedAsma.recommendedCount || 100)} বার (অথবা নামাজের পর ৩৩ বার)</span>
@@ -592,15 +622,38 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
 
                 <button
                   onClick={() => {
-                    setSuggestedAsmaIndex((prev) => (prev + 1) % ASMAUL_HUSNA_LIST.length);
-                    triggerHaptic('tap', vibrationEnabled, soundEnabled);
+                    window.dispatchEvent(
+                      new CustomEvent('open-amal-card-modal', {
+                        detail: { asmaId: suggestedAsma.id, item: suggestedAsma }
+                      })
+                    );
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 text-[11px] font-bold border border-emerald-700/60 transition flex items-center justify-center gap-1 cursor-pointer"
-                  title="অন্য আরেকটি আসমাউল হুসনা নাম দেখুন"
+                  className="w-full sm:w-auto px-3 py-2 rounded-xl bg-emerald-900/90 hover:bg-emerald-800 text-amber-300 hover:text-amber-200 text-xs font-bold border border-amber-400/40 transition flex items-center justify-center gap-1 cursor-pointer"
                 >
-                  <RefreshCw className="w-3 h-3 text-amber-300" />
-                  <span>অন্য নাম দেখুন</span>
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>বিস্তারিত আমল ও ফলাফল</span>
                 </button>
+
+                <div className="flex items-center gap-2 w-full">
+                  <button
+                    onClick={() => {
+                      setSuggestedAsmaIndex((prev) => (prev + 1) % ASMAUL_HUSNA_LIST.length);
+                      triggerHaptic('tap', vibrationEnabled, soundEnabled);
+                    }}
+                    className="flex-1 px-3 py-1.5 rounded-xl bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 text-[11px] font-bold border border-emerald-700/60 transition flex items-center justify-center gap-1 cursor-pointer"
+                    title="অন্য আরেকটি আসমাউল হুসনা নাম দেখুন"
+                  >
+                    <RefreshCw className="w-3 h-3 text-amber-300" />
+                    <span>অন্য নাম</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('asmaulHusna')}
+                    className="flex-1 px-3 py-1.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 text-[11px] font-bold border border-amber-400/30 transition flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <span>সব ৯৯টি</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -967,7 +1020,10 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
 
               {/* Controls: BIG VIBRATING TAP Button & Reset */}
               <div className="flex items-center gap-5 mt-4">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.88 }}
+                  transition={{ type: 'spring', stiffness: 450, damping: 15 }}
                   type="button"
                   onClick={handleIncrement}
                   onTouchStart={() => {
@@ -978,7 +1034,7 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
                       } catch {}
                     }
                   }}
-                  className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-300 text-emerald-950 font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-transform flex flex-col items-center justify-center border-4 border-amber-200/90 cursor-pointer select-none"
+                  className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-300 text-emerald-950 font-black text-xl shadow-2xl flex flex-col items-center justify-center border-4 border-amber-200/90 cursor-pointer select-none"
                   aria-label="তাসবিহ কাউন্ট করুন"
                 >
                   <span className="text-3xl sm:text-4xl">📿</span>
@@ -986,16 +1042,19 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
                   {vibrationEnabled && (
                     <span className="text-[9px] font-bold text-emerald-950/80">📳 ভাইব্রেশন</span>
                   )}
-                </button>
+                </motion.button>
 
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ rotate: -45, scale: 0.92 }}
+                  transition={{ duration: 0.15 }}
                   onClick={handleReset}
                   className="p-4 rounded-2xl bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/60 transition flex flex-col items-center gap-1 shadow-md cursor-pointer"
                   title={t.reset}
                 >
                   <RotateCcw className="w-5 h-5 text-amber-300" />
                   <span className="text-[10px] font-bold">{t.reset}</span>
-                </button>
+                </motion.button>
               </div>
             </div>
 

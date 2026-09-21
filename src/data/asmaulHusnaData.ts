@@ -14,6 +14,12 @@ export interface AsmaulHusnaItem {
   evidenceLevel: EvidenceLevel;
   quranRefBn?: string;
   hadithRefBn?: string;
+  hadithVirtueBn?: string;
+  testedVirtueBn?: string;
+  testedOutcomeBn?: string;
+  contextExplanationBn?: string;
+  detailedAmalRuleBn?: string;
+  amalConditionsBn?: string[];
   deeperMeaningBn?: string;
   duaWithThisNameBn?: string;
   characterLessonBn?: string;

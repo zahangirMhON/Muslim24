@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
   Search,
@@ -29,6 +30,8 @@ import {
   Compass,
   ArrowRight,
   Vibrate,
+  LayoutGrid,
+  List,
   X
 } from 'lucide-react';
 
@@ -79,6 +82,7 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('সব');
   const [selectedEvidenceFilter, setSelectedEvidenceFilter] = useState<string>('all');
+  const [galaxyViewMode, setGalaxyViewMode] = useState<'detailed' | 'grid'>('detailed');
 
   // Selected Detail Modal / Drawer
   const [selectedNameDetail, setSelectedNameDetail] = useState<AsmaulHusnaItem | null>(null);
@@ -356,9 +360,11 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
 
       {/* 2. Top Interactive Navigation Sub-Tabs */}
       <nav className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar border-b border-emerald-700/40">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setActiveSubTab('today')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeSubTab === 'today'
               ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
               : 'bg-emerald-800/40 text-emerald-200 hover:bg-emerald-800/80'
@@ -366,23 +372,27 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
         >
           <Clock className="w-4 h-4" />
           <span>আজকের নাম ও স্লট</span>
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setActiveSubTab('galaxy')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeSubTab === 'galaxy'
               ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
               : 'bg-emerald-800/40 text-emerald-200 hover:bg-emerald-800/80'
           }`}
         >
           <Layers className="w-4 h-4" />
-          <span>৯৯ নামের গ্যালাক্সি ({toBengaliDigits(99)})</span>
-        </button>
+          <span>৯৯ নামে দেখুন (হাদীস ও পরীক্ষিত ফযীলত)</span>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setActiveSubTab('library')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeSubTab === 'library'
               ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
               : 'bg-emerald-800/40 text-emerald-200 hover:bg-emerald-800/80'
@@ -390,11 +400,13 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
         >
           <BookOpen className="w-4 h-4" />
           <span>আমল ও দলীল লাইব্রেরি</span>
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setActiveSubTab('tasbih')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeSubTab === 'tasbih'
               ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
               : 'bg-emerald-800/40 text-emerald-200 hover:bg-emerald-800/80'
@@ -402,11 +414,13 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
         >
           <Target className="w-4 h-4 text-emerald-900" />
           <span>ডিজিটাল তাসবিহ ও জিকির</span>
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setActiveSubTab('challenges')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeSubTab === 'challenges'
               ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
               : 'bg-emerald-800/40 text-emerald-200 hover:bg-emerald-800/80'
@@ -414,11 +428,13 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
         >
           <Award className="w-4 h-4" />
           <span>আমল কোর্স ও চ্যালেঞ্জ</span>
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setActiveSubTab('review')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeSubTab === 'review'
               ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
               : 'bg-emerald-800/40 text-emerald-200 hover:bg-emerald-800/80'
@@ -426,7 +442,7 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
         >
           <RotateCcw className="w-4 h-4" />
           <span>স্পেসড রিভিউ ({toBengaliDigits(reviewQueue.length)})</span>
-        </button>
+        </motion.button>
       </nav>
 
       {/* SUB-TAB 1: TODAY'S NAME & TIME-AWARE SLOT WIDGET */}
@@ -508,16 +524,17 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
 
           {/* Quick Grid Preview of Favorites & Daily Focus */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-sm font-bold text-emerald-200 flex items-center gap-2">
                 <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                আপনার পছন্দের ও আজকের বিশেষ জিকির
+                আপনার পছন্দের ও নির্বাচিত বিশেষ জিকির
               </h3>
               <button
                 onClick={() => setActiveSubTab('galaxy')}
-                className="text-xs font-bold text-amber-300 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-amber-300 hover:text-amber-200 hover:underline flex items-center gap-1.5 bg-emerald-950/80 px-3 py-1.5 rounded-xl border border-amber-400/30"
               >
-                সব ৯৯টি দেখুন <ArrowRight className="w-3.5 h-3.5" />
+                <span>৯৯ নামে দেখুন (হাদীস ও পরীক্ষিত ফযীলত)</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
@@ -526,44 +543,83 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
                 const prog = getProgress(item.id);
                 const percent = getSingleNameMasteryPercent(prog);
                 return (
-                  <div
+                  <motion.div
                     key={item.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ y: -4, scale: 1.015 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
                     onClick={() => setSelectedNameDetail(item)}
-                    className="bg-emerald-950/60 hover:bg-emerald-800/60 transition cursor-pointer p-4 rounded-2xl border border-emerald-700/50 space-y-3 relative group"
+                    className="bg-emerald-950/70 hover:bg-emerald-800/70 transition cursor-pointer p-4 rounded-2xl border border-emerald-700/60 space-y-3 relative group flex flex-col justify-between"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-emerald-300 bg-emerald-900/80 px-2 py-0.5 rounded-md border border-emerald-700/50">
-                        #{toBengaliDigits(item.id)}
-                      </span>
-                      {renderEvidenceBadge(item.evidenceLevel)}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-emerald-300 bg-emerald-900/80 px-2 py-0.5 rounded-md border border-emerald-700/50">
+                          #{toBengaliDigits(item.id)}
+                        </span>
+                        {renderEvidenceBadge(item.evidenceLevel)}
+                      </div>
+
+                      <div className="text-center space-y-1">
+                        <div className="text-3xl font-serif font-bold text-amber-300 group-hover:scale-105 transition-transform">
+                          {item.arabic}
+                        </div>
+                        <div className="text-base font-bold text-emerald-100">
+                          {item.transliterationBn}
+                        </div>
+                        <div className="text-xs text-emerald-300 font-medium break-words leading-relaxed">
+                          "{item.meaningBn}"
+                        </div>
+                      </div>
+
+                      {/* Hadith & Tested Virtues Preview */}
+                      <div className="space-y-1.5 pt-1 text-xs">
+                        <div className="bg-emerald-900/60 p-2.5 rounded-xl border border-teal-800/50 space-y-1">
+                          <span className="text-[11px] font-bold text-cyan-300 flex items-center gap-1">
+                            <BookOpen className="w-3 h-3 text-cyan-400" />
+                            হাদীস অনুযায়ী ফযীলত:
+                          </span>
+                          <p className="text-xs text-emerald-100 leading-relaxed font-medium break-words">
+                            {item.hadithVirtueBn || item.virtueBn}
+                          </p>
+                        </div>
+
+                        <div className="bg-amber-950/30 p-2.5 rounded-xl border border-amber-700/40 space-y-1">
+                          <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-amber-400" />
+                            পরীক্ষিত ফযীলত ও আমল:
+                          </span>
+                          <p className="text-xs text-amber-100/90 leading-relaxed break-words">
+                            {item.testedVirtueBn || item.virtueBn}
+                          </p>
+                          {item.testedOutcomeBn && (
+                            <div className="text-[11px] text-emerald-200 font-semibold bg-emerald-950/80 p-1.5 rounded-lg border border-amber-400/20 break-words">
+                              ✨ ফলাফল: {item.testedOutcomeBn}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="text-center space-y-1">
-                      <div className="text-2xl font-serif font-bold text-amber-300 group-hover:scale-105 transition-transform">
-                        {item.arabic}
+                    <div className="space-y-2 pt-2 border-t border-emerald-800/60">
+                      <div className="flex items-center justify-between text-[11px] text-emerald-300">
+                        <span>দৈনিক আমল: <strong className="text-amber-300">{toBengaliDigits(item.recommendedCount)} বার</strong></span>
+                        <span className="text-amber-300 font-bold">{toBengaliDigits(percent)}% সম্পন্ন</span>
                       </div>
-                      <div className="text-sm font-bold text-emerald-100">
-                        {item.transliterationBn}
-                      </div>
-                      <div className="text-xs text-emerald-300/80 line-clamp-1">
-                        {item.meaningBn}
-                      </div>
-                    </div>
 
-                    {/* Progress Bar */}
-                    <div className="space-y-1 pt-1">
-                      <div className="flex justify-between text-[10px] text-emerald-300 font-medium">
-                        <span>মাস্টারি প্রগ্রেস</span>
-                        <span className="text-amber-300 font-bold">{toBengaliDigits(percent)}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-emerald-900 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-amber-400 rounded-full transition-all duration-300"
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedNameDetail(item);
+                        }}
+                        className="w-full py-1.5 rounded-xl bg-emerald-900/80 hover:bg-amber-400 hover:text-emerald-950 text-emerald-100 font-bold text-xs transition border border-emerald-700/60 flex items-center justify-center gap-1.5"
+                      >
+                        <span>বিস্তারিত আমল ও ফলাফল দেখুন</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -605,82 +661,235 @@ export const AsmaulHusnaCard: React.FC<AsmaulHusnaCardProps> = ({ onPlayAudio })
               </div>
             </div>
 
-            {/* Category Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
-              {categories.map(cat => (
+            {/* View Mode Toggle Bar & Counter */}
+            <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-emerald-800/60">
+              <span className="text-xs text-emerald-300 font-medium">
+                মোট নাম: <strong className="text-amber-300">{toBengaliDigits(filteredList.length)}</strong> টি
+              </span>
+
+              <div className="flex items-center gap-1.5 bg-emerald-900/90 p-1 rounded-xl border border-emerald-700/60">
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
-                    selectedCategory === cat
+                  onClick={() => setGalaxyViewMode('detailed')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                    galaxyViewMode === 'detailed'
                       ? 'bg-amber-400 text-emerald-950 shadow-sm'
-                      : 'bg-emerald-900/60 text-emerald-200 hover:bg-emerald-800/60'
+                      : 'text-emerald-300 hover:text-emerald-100'
                   }`}
                 >
-                  {cat}
+                  <List className="w-3.5 h-3.5" />
+                  <span>বিস্তারিত কার্ড (ফযীলতসহ)</span>
                 </button>
-              ))}
+                <button
+                  onClick={() => setGalaxyViewMode('grid')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                    galaxyViewMode === 'grid'
+                      ? 'bg-amber-400 text-emerald-950 shadow-sm'
+                      : 'text-emerald-300 hover:text-emerald-100'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>কম্প্যাক্ট গ্রিড</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* 99 Grid View */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {filteredList.map(item => {
-              const prog = getProgress(item.id);
-              const percent = getSingleNameMasteryPercent(prog);
-              const isFav = favorites.includes(item.id);
+          {/* 99 View: Detailed Cards or Compact Grid */}
+          {galaxyViewMode === 'detailed' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredList.map(item => {
+                const prog = getProgress(item.id);
+                const percent = getSingleNameMasteryPercent(prog);
+                const isFav = favorites.includes(item.id);
 
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => setSelectedNameDetail(item)}
-                  className="bg-emerald-950/70 hover:bg-emerald-800/70 transition cursor-pointer p-3.5 rounded-2xl border border-emerald-700/50 space-y-2 relative group flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between text-[11px] text-emerald-300 font-bold">
-                    <span>#{toBengaliDigits(item.id)}</span>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        toggleFavorite(item.id);
-                      }}
-                      className="p-1 hover:text-amber-400 transition"
-                    >
-                      <Heart
-                        className={`w-3.5 h-3.5 ${
-                          isFav ? 'text-amber-400 fill-amber-400' : 'text-emerald-500'
-                        }`}
-                      />
-                    </button>
-                  </div>
+                return (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ y: -4, scale: 1.015 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => setSelectedNameDetail(item)}
+                    className="bg-emerald-950/70 hover:bg-emerald-800/70 transition cursor-pointer p-4 rounded-2xl border border-emerald-700/60 space-y-3 relative group flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      {/* Card Header: Number, Category & Evidence */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-emerald-300 bg-emerald-900/80 px-2 py-0.5 rounded-md border border-emerald-700/50">
+                            #{toBengaliDigits(item.id)}
+                          </span>
+                          <span className="text-[11px] font-semibold text-amber-300/90 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
+                            {item.categoryBn}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {renderEvidenceBadge(item.evidenceLevel)}
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              toggleFavorite(item.id);
+                            }}
+                            className="p-1 hover:text-amber-400 transition"
+                            title="পছন্দের তালিকায় যুক্ত করুন"
+                          >
+                            <Heart
+                              className={`w-4 h-4 ${
+                                isFav ? 'text-amber-400 fill-amber-400' : 'text-emerald-500 hover:text-amber-400'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
 
-                  <div className="text-center py-1">
-                    <div className="text-2xl font-serif font-bold text-amber-300 group-hover:scale-105 transition-transform">
-                      {item.arabic}
-                    </div>
-                    <div className="text-xs font-bold text-emerald-100 truncate">
-                      {item.transliterationBn}
-                    </div>
-                    <div className="text-[11px] text-emerald-300/80 truncate">
-                      {item.meaningBn}
-                    </div>
-                  </div>
+                      {/* Name Arabic, Transliteration, Meaning */}
+                      <div className="text-center py-1">
+                        <div className="text-3xl font-serif font-bold text-amber-300 group-hover:scale-105 transition-transform">
+                          {item.arabic}
+                        </div>
+                        <div className="text-base font-bold text-emerald-100">
+                          {item.transliterationBn}
+                        </div>
+                        <div className="text-xs text-emerald-300 font-medium">
+                          "{item.meaningBn}"
+                        </div>
+                      </div>
 
-                  <div className="space-y-1 pt-1 border-t border-emerald-800/60">
-                    <div className="flex justify-between items-center text-[10px] text-emerald-300 font-semibold">
-                      <span>মাস্টারি</span>
-                      <span className="text-amber-300">{toBengaliDigits(percent)}%</span>
+                      {/* 1. Hadith Virtue */}
+                      <div className="bg-emerald-900/50 p-2.5 rounded-xl border border-teal-800/50 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-cyan-300 flex items-center gap-1">
+                            <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                            হাদীস অনুযায়ী ফযীলত:
+                          </span>
+                          <span className="text-[10px] text-cyan-200/80">দলীলভিত্তিক</span>
+                        </div>
+                        <p className="text-xs text-emerald-100 leading-relaxed font-medium break-words">
+                          {item.hadithVirtueBn || item.virtueBn}
+                        </p>
+                      </div>
+
+                      {/* 2. Tested Virtue & Outcomes */}
+                      <div className="bg-amber-950/30 p-2.5 rounded-xl border border-amber-700/40 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            পরীক্ষিত ফযীলত ও ফলাফল:
+                          </span>
+                          <span className="text-[10px] text-amber-200/80">মুজাররবাত</span>
+                        </div>
+                        <p className="text-xs text-amber-100/90 leading-relaxed break-words">
+                          {item.testedVirtueBn || item.virtueBn}
+                        </p>
+                        {item.testedOutcomeBn && (
+                          <div className="text-[11px] text-emerald-200 font-semibold bg-emerald-950/80 p-1.5 rounded-lg border border-amber-400/20 break-words">
+                            ✨ ফলাফল: {item.testedOutcomeBn}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="w-full h-1 bg-emerald-900 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-amber-400 transition-all duration-300"
-                        style={{ width: `${percent}%` }}
-                      />
+
+                    {/* Footer: Amal count, mastery and detail button */}
+                    <div className="space-y-2 pt-2 border-t border-emerald-800/60">
+                      <div className="flex items-center justify-between text-xs text-emerald-300">
+                        <span>জিকির সংখ্যা: <strong className="text-amber-300">{toBengaliDigits(item.recommendedCount)} বার</strong></span>
+                        <span className="text-amber-300 font-bold">{toBengaliDigits(percent)}% আমল</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedNameDetail(item);
+                          }}
+                          className="py-1.5 px-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold text-xs transition flex items-center justify-center gap-1 shadow-sm"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>বিস্তারিত আমল</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveTasbihAsmaId(item.id);
+                            setActiveSubTab('tasbih');
+                          }}
+                          className="py-1.5 px-2 rounded-xl bg-emerald-800/80 hover:bg-emerald-700 text-emerald-100 font-bold text-xs transition border border-emerald-600/50 flex items-center justify-center gap-1"
+                        >
+                          <Target className="w-3.5 h-3.5 text-amber-300" />
+                          <span>জিকির করুন</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Compact 99 Grid View */
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {filteredList.map(item => {
+                const prog = getProgress(item.id);
+                const percent = getSingleNameMasteryPercent(prog);
+                const isFav = favorites.includes(item.id);
+
+                return (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ y: -3, scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ duration: 0.18 }}
+                    onClick={() => setSelectedNameDetail(item)}
+                    className="bg-emerald-950/70 hover:bg-emerald-800/70 transition cursor-pointer p-3.5 rounded-2xl border border-emerald-700/50 space-y-2 relative group flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between text-[11px] text-emerald-300 font-bold">
+                      <span>#{toBengaliDigits(item.id)}</span>
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          toggleFavorite(item.id);
+                        }}
+                        className="p-1 hover:text-amber-400 transition"
+                      >
+                        <Heart
+                          className={`w-3.5 h-3.5 ${
+                            isFav ? 'text-amber-400 fill-amber-400' : 'text-emerald-500'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="text-center py-1">
+                      <div className="text-2xl font-serif font-bold text-amber-300 group-hover:scale-105 transition-transform">
+                        {item.arabic}
+                      </div>
+                      <div className="text-xs font-bold text-emerald-100 break-words">
+                        {item.transliterationBn}
+                      </div>
+                      <div className="text-[11px] text-emerald-300/90 break-words leading-tight">
+                        {item.meaningBn}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 pt-1 border-t border-emerald-800/60">
+                      <div className="flex justify-between items-center text-[10px] text-emerald-300 font-semibold">
+                        <span>মাস্টারি</span>
+                        <span className="text-amber-300">{toBengaliDigits(percent)}%</span>
+                      </div>
+                      <div className="w-full h-1 bg-emerald-900 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-amber-400 transition-all duration-300"
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

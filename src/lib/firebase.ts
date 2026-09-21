@@ -1,15 +1,23 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  inMemoryPersistence,
   GoogleAuthProvider, 
   signInWithPopup, 
-  signInAnonymously,
+  signInAnonymously, 
   signOut, 
   onAuthStateChanged,
   User 
 } from 'firebase/auth';
 import { 
   getFirestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  memoryLocalCache,
   doc, 
   setDoc, 
   getDoc, 
@@ -18,7 +26,7 @@ import {
   where, 
   getDocs,
   onSnapshot,
-  enableIndexedDbPersistence
+  Firestore
 } from 'firebase/firestore';
 import config from '../../firebase-applet-config.json';
 
@@ -34,22 +42,60 @@ const firebaseConfig = {
 // Initialize Firebase App
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Auth & Firestore with specific databaseId if available
-export const auth = getAuth(app);
-export const db = config.firestoreDatabaseId 
-  ? getFirestore(app, config.firestoreDatabaseId) 
-  : getFirestore(app);
-
-// Enable IndexedDB local cache persistence for Firestore
+// Handle transient browser IndexedDB closing or visibility changes gracefully
 if (typeof window !== 'undefined') {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn('Firestore persistence enabled in another tab');
-    } else if (err.code === 'unimplemented') {
-      console.warn('Browser does not support Firestore persistence');
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason;
+    const msg = reason?.message || String(reason || '');
+    if (
+      msg.includes('Database is closing') ||
+      msg.includes('closing/hidden') ||
+      msg.includes('failed-precondition') ||
+      reason?.code === 'failed-precondition'
+    ) {
+      console.warn('Gracefully handled browser IndexedDB state notice:', msg);
+      event.preventDefault();
     }
   });
 }
+
+// Initialize Auth with multi-layered persistence (IndexedDB -> LocalStorage -> Memory)
+export const auth = (() => {
+  if (typeof window === 'undefined') {
+    return getAuth(app);
+  }
+  try {
+    return initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence]
+    });
+  } catch {
+    return getAuth(app);
+  }
+})();
+
+// Initialize Firestore with modern persistent local cache and automatic fallback
+export const db: Firestore = (() => {
+  const dbId = config.firestoreDatabaseId || undefined;
+  if (typeof window !== 'undefined') {
+    try {
+      return initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager()
+        })
+      }, dbId);
+    } catch (e) {
+      console.warn('Persistent cache initialization note, using memory cache fallback:', e);
+      try {
+        return initializeFirestore(app, {
+          localCache: memoryLocalCache()
+        }, dbId);
+      } catch {
+        return dbId ? getFirestore(app, dbId) : getFirestore(app);
+      }
+    }
+  }
+  return dbId ? getFirestore(app, dbId) : getFirestore(app);
+})();
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -75,9 +121,15 @@ export async function loginWithGoogle() {
     return user;
   } catch (error: any) {
     console.error('Google Sign-In Error:', error);
-    // Fallback to anonymous guest sign in if popup is blocked in iframe
-    if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/popup-closed-by-user') {
-      console.warn('Popup blocked or closed, falling back to guest login...');
+    const errMsg = error?.message || '';
+    // Fallback to anonymous guest sign in if popup is blocked in iframe or database is closing/hidden
+    if (
+      error?.code === 'auth/popup-blocked' || 
+      error?.code === 'auth/popup-closed-by-user' ||
+      errMsg.includes('Database is closing') ||
+      errMsg.includes('closing/hidden')
+    ) {
+      console.warn('Popup blocked, closed, or IndexedDB closing, falling back to guest login...');
       return await loginAnonymously('অতিথি ইউজার');
     }
     throw error;
@@ -86,7 +138,19 @@ export async function loginWithGoogle() {
 
 export async function loginAnonymously(guestName = 'অতিথি মুমিন') {
   try {
-    const result = await signInAnonymously(auth);
+    let result;
+    try {
+      result = await signInAnonymously(auth);
+    } catch (err: any) {
+      const msg = err?.message || '';
+      if (msg.includes('Database is closing') || msg.includes('closing/hidden')) {
+        console.warn('Database is closing/hidden during auth, retrying with brief delay...');
+        await new Promise((res) => setTimeout(res, 500));
+        result = await signInAnonymously(auth);
+      } else {
+        throw err;
+      }
+    }
     const user = result.user;
 
     const userRef = doc(db, 'users', user.uid);

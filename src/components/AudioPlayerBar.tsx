@@ -17,12 +17,15 @@ import {
   RefreshCw,
   Clock,
   ShieldCheck,
-  Check
+  Check,
+  Maximize2
 } from 'lucide-react';
 import { Language } from '../types';
 import { translations } from '../locales/translations';
 import { MediaEngineService, MediaScheduleItem, DEFAULT_247_SCHEDULE } from '../services/mediaEngine';
 import { toBengaliDigits } from '../utils/bengaliUtils';
+import { ModernMusicPlayerPopup } from './ModernMusicPlayerPopup';
+import { playlistManager } from '../services/audioPlaylistManager';
 
 interface AudioPlayerBarProps {
   lang: Language;
@@ -52,7 +55,28 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showMusicPlayerPopup, setShowMusicPlayerPopup] = useState(false);
+  const [popupFullScreen, setPopupFullScreen] = useState(false);
   const [autoScheduleNotification, setAutoScheduleNotification] = useState<string | null>(null);
+
+  // Global listener to open music player popup from anywhere
+  useEffect(() => {
+    const handleOpen = (e: any) => {
+      setShowMusicPlayerPopup(true);
+      if (e?.detail?.fullScreen) {
+        setPopupFullScreen(true);
+      }
+    };
+    window.addEventListener('open-music-player-popup', handleOpen);
+    return () => window.removeEventListener('open-music-player-popup', handleOpen);
+  }, []);
+
+  // Sync active track with playlistManager
+  useEffect(() => {
+    if (activeAudioUrl && activeTitle) {
+      playlistManager.syncActiveTrack(activeTitle, activeAudioUrl);
+    }
+  }, [activeAudioUrl, activeTitle]);
 
   // 24/7 Continuous Autoplay Mode State
   const [is247AutoplayEnabled, setIs247AutoplayEnabled] = useState<boolean>(() => {
@@ -338,7 +362,11 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
           {/* Left: Info & 24/7 Autoplay Toggle */}
           <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto justify-between md:justify-start">
             <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-300 shadow flex-shrink-0">
+              <div
+                onClick={() => setShowMusicPlayerPopup(true)}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-300 shadow flex-shrink-0 cursor-pointer hover:scale-105 transition"
+                title="পপ-আপ মিউজিক প্লেয়ার খুলুন"
+              >
                 <Radio className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
               </div>
               <div className="min-w-0 max-w-[160px] sm:max-w-xs md:max-w-sm">
@@ -362,14 +390,39 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
                     <span>{is247AutoplayEnabled ? 'চালু' : 'বন্ধ'}</span>
                   </button>
                 </div>
-                <p className="text-xs sm:text-sm font-black text-white truncate drop-shadow-sm">
+                <p
+                  onClick={() => setShowMusicPlayerPopup(true)}
+                  className="text-xs sm:text-sm font-black text-white truncate drop-shadow-sm cursor-pointer hover:text-amber-300 transition"
+                  title="পপ-আপ মিউজিক প্লেয়ার খুলতে ক্লিক করুন"
+                >
                   {activeTitle}
                 </p>
               </div>
             </div>
 
-            {/* Actions: Track List & Minimize Button */}
+            {/* Actions: Track List, Pop-up Player & Minimize Button */}
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setShowMusicPlayerPopup(true)}
+                className="px-2.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-emerald-950 font-black text-xs flex items-center gap-1 transition shadow cursor-pointer active:scale-95"
+                title="পপ-আপ মিউজিক প্লেয়ার খুলুন (হিসনুল মুসলিম, ফোল্ডার প্লেলিস্ট ও লিরিক্সসহ)"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>পপ আপ প্লেয়ার</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setPopupFullScreen(true);
+                  setShowMusicPlayerPopup(true);
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-teal-700 to-emerald-800 hover:from-teal-600 hover:to-emerald-700 text-amber-300 border border-amber-400/60 text-xs font-bold flex items-center gap-1 transition shadow cursor-pointer"
+                title="পূর্ণাঙ্গ ফুল স্ক্রিন লিরিক্স মোড খুলুন"
+              >
+                <Maximize2 className="w-3.5 h-3.5 text-amber-300" />
+                <span className="hidden sm:inline">ফুল স্ক্রিন লিরিক্স</span>
+              </button>
+
               <button
                 onClick={() => setShowScheduleModal(true)}
                 className="px-2.5 py-1.5 rounded-xl bg-emerald-900/90 hover:bg-emerald-800 text-amber-300 border border-emerald-700/80 text-xs font-bold flex items-center gap-1 transition shadow cursor-pointer"
@@ -594,6 +647,35 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
           </div>
         </div>
       )}
+
+      {/* Modern Pop-up Type Music Player Modal */}
+      <ModernMusicPlayerPopup
+        isOpen={showMusicPlayerPopup}
+        onClose={() => {
+          setShowMusicPlayerPopup(false);
+          setPopupFullScreen(false);
+        }}
+        initialFullScreen={popupFullScreen}
+        lang={lang}
+        externalAudio={{
+          currentTime,
+          duration,
+          isPlaying,
+          onTogglePlay,
+          onSeek: (t) => {
+            if (audioRef.current) {
+              audioRef.current.currentTime = t;
+              setCurrentTime(t);
+            }
+          },
+          onSelectTrack: (title, url) => {
+            onSelectTrack(title, url);
+            playlistManager.syncActiveTrack(title, url);
+          },
+          activeTitle,
+          activeAudioUrl
+        }}
+      />
     </>
   );
 };

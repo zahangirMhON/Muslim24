@@ -99,7 +99,7 @@ export const SpecialDayAmalSuggestions: React.FC<SpecialDayAmalSuggestionsProps>
                 {data.hijriDateInfoBn}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-emerald-100/90 mt-0.5 line-clamp-2">
+            <p className="text-xs sm:text-sm text-emerald-100/90 mt-0.5 leading-relaxed break-words">
               {data.daySubHeadingBn}
             </p>
           </div>

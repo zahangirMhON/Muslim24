@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Calendar, BookOpen, CheckSquare, Compass, ShieldCheck, Moon, Sun, AlertTriangle, Clock, Award, Flame, Heart, Share2, ArrowRight, Smartphone, Lock, CheckCircle2, Bell } from 'lucide-react';
+import { Sparkles, Calendar, BookOpen, CheckSquare, Compass, ShieldCheck, Moon, Sun, AlertTriangle, Clock, Award, Flame, Heart, Share2, ArrowRight, Smartphone, Lock, CheckCircle2, Bell, ExternalLink } from 'lucide-react';
 import { IslamicFocusEngine, HijriMonthData, DailyFocusData } from '../services/islamicFocusEngine';
 import { launchDhikrInTasbih } from '../utils/haptics';
 import { deviceAmalNotifier } from '../services/deviceAmalNotificationEngine';
@@ -179,24 +179,30 @@ export const IslamicFocusDashboard: React.FC<Props> = ({ lang }) => {
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
-                {devicePermission !== 'granted' ? (
+                <button
+                  onClick={async () => {
+                    if (devicePermission !== 'granted') {
+                      await handleRequestPermission();
+                    }
+                    handleTestLockScreen();
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-400 text-emerald-950 text-xs font-black hover:bg-amber-300 transition flex items-center gap-1.5 shadow cursor-pointer active:scale-95"
+                  title="৫ সেকেন্ডের মধ্যে মোবাইল পাওয়ার বাটন চেপে স্ক্রিন লক করুন"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>
+                    {testCountdown !== null ? `লক করুন: ${testCountdown} সে.` : '📱 ৫ সে. লক টেস্ট চালান'}
+                  </span>
+                </button>
+
+                {typeof window !== 'undefined' && window.self !== window.top && (
                   <button
-                    onClick={handleRequestPermission}
-                    className="px-3.5 py-1.5 rounded-xl bg-amber-400 text-emerald-950 text-xs font-black hover:bg-amber-300 transition flex items-center gap-1.5 shadow cursor-pointer animate-pulse"
+                    onClick={() => window.open(window.location.href, '_blank')}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-amber-300 border border-amber-400/40 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                    title="প্রিভিউ ফ্রেমের বদলে সরাসরি ব্রাউজার ট্যাবে খুলুন"
                   >
-                    <Smartphone className="w-3.5 h-3.5" />
-                    <span>লক অ্যালার্ট অন করুন</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleTestLockScreen}
-                    className="px-3 py-1.5 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-400/60 hover:bg-amber-400/30 text-xs font-bold transition flex items-center gap-1.5 shadow cursor-pointer"
-                    title="৫ সেকেন্ডের মধ্যে ফোন লক করে টেস্ট দেখুন"
-                  >
-                    <Smartphone className="w-3.5 h-3.5" />
-                    <span>
-                      {testCountdown !== null ? `লক করুন: ${testCountdown} সে.` : '📱 ৫ সে. লক টেস্ট'}
-                    </span>
+                    <ExternalLink className="w-3 h-3" />
+                    <span>নতুন ট্যাবে খুলুন</span>
                   </button>
                 )}
               </div>

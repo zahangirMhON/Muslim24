@@ -1,4 +1,5 @@
 import { AsmaulHusnaItem, EvidenceLevel } from './asmaulHusnaData';
+import { getAsmaVirtueDetails } from './asmaVirtuesData';
 
 // Specific authentic metadata for all 99 Divine Names
 interface RawNameMeta {
@@ -450,6 +451,7 @@ const REMAINING_NAMES_BASE = [
 
 // Combine all 99 names
 ALL_99_ASMA_METADATA.forEach(m => {
+  const details = getAsmaVirtueDetails(m.id, m.ar, m.bn, m.meaning, m.category);
   FULL_99_NAMES_DATA.push({
     id: m.id,
     arabic: m.ar,
@@ -462,6 +464,12 @@ ALL_99_ASMA_METADATA.forEach(m => {
     evidenceLevel: m.id <= 20 ? 'quran_proof' : 'sahih_hadith',
     quranRefBn: m.quran,
     hadithRefBn: m.hadith,
+    hadithVirtueBn: details.hadithVirtueBn,
+    testedVirtueBn: details.testedVirtueBn,
+    testedOutcomeBn: details.testedOutcomeBn,
+    contextExplanationBn: details.contextExplanationBn,
+    detailedAmalRuleBn: details.detailedAmalRuleBn,
+    amalConditionsBn: details.amalConditionsBn,
     deeperMeaningBn: m.deeper,
     duaWithThisNameBn: m.dua,
     characterLessonBn: m.lesson,
@@ -472,6 +480,7 @@ ALL_99_ASMA_METADATA.forEach(m => {
 });
 
 REMAINING_NAMES_BASE.forEach(r => {
+  const details = getAsmaVirtueDetails(r.id, r.ar, r.bn, r.mean, r.cat);
   FULL_99_NAMES_DATA.push({
     id: r.id,
     arabic: r.ar,
@@ -484,7 +493,13 @@ REMAINING_NAMES_BASE.forEach(r => {
     evidenceLevel: r.id % 2 === 0 ? 'sahih_hadith' : 'quran_proof',
     quranRefBn: `সূরা আল-আ'রাফ: ১৮০, সূরা আল-হাশর: ২২-২৪`,
     hadithRefBn: `সহিহ বুখারী ২৭৩৬, সহিহ মুসলিম ২৬৭৭ (আল্লাহর ৯৯টি নামের সার্বিক ফজিলত)`,
-    deeperMeaningBn: `আল্লাহ তাআলার পবিত্র বৈশিষ্ট্য '${r.bn}' স্মরণের মাধ্যমে অন্তরে তাঁর মহত্ত্ব প্রতিষ্ঠিত হয়।`,
+    hadithVirtueBn: details.hadithVirtueBn,
+    testedVirtueBn: details.testedVirtueBn,
+    testedOutcomeBn: details.testedOutcomeBn,
+    contextExplanationBn: details.contextExplanationBn,
+    detailedAmalRuleBn: details.detailedAmalRuleBn,
+    amalConditionsBn: details.amalConditionsBn,
+    deeperMeaningBn: details.contextExplanationBn || `আল্লাহ তাআলার পবিত্র বৈশিষ্ট্য '${r.bn}' স্মরণের মাধ্যমে অন্তরে তাঁর মহত্ত্ব প্রতিষ্ঠিত হয়।`,
     duaWithThisNameBn: r.dua,
     characterLessonBn: `${r.bn} নামের শিক্ষা ধারণ করে নিজের আচরণকে সংযত ও পবিত্র রাখা।`,
     lifeApplicationTaskBn: `আজ অন্তত একবার এই পবিত্র নাম পাঠ করে আল্লাহর কাছে আন্তরিক দোয়া করুন।`,

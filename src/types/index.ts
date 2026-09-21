@@ -115,6 +115,15 @@ export interface QuizQuestion {
   sahihReferenceBn: string;
 }
 
+export interface AiScheduleTask {
+  title: string;
+  category: 'prayer' | 'amal' | 'personal_care' | 'medicine' | 'water' | 'feeding' | 'exercise' | 'custom';
+  time: string; // "HH:mm" e.g. "04:30"
+  priority?: 'critical' | 'important' | 'normal';
+  notes?: string;
+  durationMinutes?: number;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'ai';
@@ -122,6 +131,8 @@ export interface ChatMessage {
   timestamp: string;
   sources?: string[];
   detectedLanguage?: string;
+  scheduleTasks?: AiScheduleTask[];
+  scheduleTitle?: string;
 }
 
 export interface SurahItem {

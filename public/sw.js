@@ -1,5 +1,5 @@
 // Islamic Life 24/7 Service Worker for Progressive Web App (PWA), Offline Mode & Lockscreen Device Push Notifications
-const CACHE_NAME = 'islamic-life-247-v3';
+const CACHE_NAME = 'islamic-life-247-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -37,6 +37,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
+            console.log('Clearing outdated cache:', cache);
             return caches.delete(cache);
           }
         })
@@ -52,31 +53,48 @@ self.addEventListener('fetch', (event) => {
 
   const url = event.request.url;
 
-  // Skip Vite HMR, WebSockets & extensions
-  if (url.includes('/@vite/') || url.includes('ws://') || url.includes('wss://') || url.startsWith('chrome-extension:')) {
+  // STRICTLY SKIP and NEVER cache Vite dev server requests, node_modules, HMR, WebSockets & extensions
+  if (
+    url.includes('/@vite/') ||
+    url.includes('/@fs/') ||
+    url.includes('/@id/') ||
+    url.includes('/@react-refresh') ||
+    url.includes('/src/') ||
+    url.includes('/node_modules/') ||
+    url.includes('.vite/') ||
+    url.includes('ws://') ||
+    url.includes('wss://') ||
+    url.includes('?v=') ||
+    url.startsWith('chrome-extension:')
+  ) {
     return;
   }
 
+  // Network-first strategy for page and static requests to prevent stale React chunks
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          networkResponse.type === 'basic' &&
+          (url.endsWith('.svg') || url.endsWith('.png') || url.endsWith('.json') || url.endsWith('.ico'))
+        ) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
           if (event.request.headers.get('accept')?.includes('text/html')) {
             return caches.match('/index.html');
           }
         });
-
-      return cachedResponse || fetchPromise;
-    })
+      })
   );
 });
 

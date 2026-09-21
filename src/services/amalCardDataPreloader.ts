@@ -22,6 +22,12 @@ export interface UnifiedAmalCardData {
   evidenceLevel: EvidenceLevel;
   quranRefBn?: string;
   hadithRefBn?: string;
+  hadithVirtueBn?: string;
+  testedVirtueBn?: string;
+  testedOutcomeBn?: string;
+  contextExplanationBn?: string;
+  detailedAmalRuleBn?: string;
+  amalConditionsBn?: string[];
   deeperMeaningBn?: string;
   duaWithThisNameBn?: string;
   characterLessonBn?: string;
@@ -69,6 +75,12 @@ export function preloadAllAmalData(): void {
       evidenceLevel: item.evidenceLevel || 'quran_proof',
       quranRefBn: item.quranRefBn || 'সূরা আল-আ\'রাফ: ১৮০, সূরা আল-হাশর: ২২-২৪',
       hadithRefBn: item.hadithRefBn || 'সহিহ বুখারী ২৭৩৬, সহিহ মুসলিম ২৬৭৭ (আল্লাহর ৯৯টি নামের সার্বিক ফজিলত)',
+      hadithVirtueBn: item.hadithVirtueBn || item.virtueBn,
+      testedVirtueBn: item.testedVirtueBn || item.virtueBn,
+      testedOutcomeBn: item.testedOutcomeBn || 'অন্তরে পরম প্রশান্তি, দ্বীনি দৃঢ়তা ও জীবনে বরকত লাভ।',
+      contextExplanationBn: item.contextExplanationBn || item.deeperMeaningBn,
+      detailedAmalRuleBn: item.detailedAmalRuleBn || `প্রতিদিন সালাতের পর ওযূ অবস্থায় ১০০ বার পাঠ করুন।`,
+      amalConditionsBn: item.amalConditionsBn || ['হালাল উপার্জন বজায় রাখা', 'একাগ্রচিত্তে জিকির করা', 'ধৈর্য ও তাওয়াক্কুল রাখা'],
       deeperMeaningBn: item.deeperMeaningBn || `আল্লাহ তাআলার পবিত্র বৈশিষ্ট্য '${item.transliterationBn}' স্মরণের মাধ্যমে অন্তরে তাঁর মহত্ত্ব প্রতিষ্ঠিত হয়।`,
       duaWithThisNameBn: item.duaWithThisNameBn || `يَا ${item.arabic} اغْفِرْ لِي وَارْحَمْنِي (হে ${item.transliterationBn}! আমাকে ক্ষমা করুন ও দয়া করুন)`,
       characterLessonBn: item.characterLessonBn || `${item.transliterationBn} নামের শিক্ষা ধারণ করে নিজের চরিত্রকে সুন্দর ও বিনয়ী রাখা।`,
@@ -212,8 +224,14 @@ export function normalizeAsmaToAmalCard(item: AsmaulHusnaItem): UnifiedAmalCardD
     evidenceLevel: item.evidenceLevel || 'quran_proof',
     quranRefBn: item.quranRefBn || 'সূরা আল-আ\'রাফ: ১৮০, সূরা আল-হাশর: ২২-২৪',
     hadithRefBn: item.hadithRefBn || 'সহিহ বুখারী ২৭৩৬, সহিহ মুসলিম ২৬৭৭ (আল্লাহর ৯৯টি নামের সার্বিক ফজিলত)',
+    hadithVirtueBn: item.hadithVirtueBn || item.virtueBn,
+    testedVirtueBn: item.testedVirtueBn || item.virtueBn,
+    testedOutcomeBn: item.testedOutcomeBn || 'আল্লাহর রহমত লাভ ও অন্তরে পরম প্রশান্তি।',
+    contextExplanationBn: item.contextExplanationBn || item.deeperMeaningBn,
+    detailedAmalRuleBn: item.detailedAmalRuleBn || `প্রতিদিন সালাতের পর ওযূ অবস্থায় ১০০ বার পাঠ করুন।`,
+    amalConditionsBn: item.amalConditionsBn || ['হালাল উপার্জন বজায় রাখা', 'একাগ্রচিত্তে জিকির করা', 'ধৈর্য ও তাওয়াক্কুল রাখা'],
     deeperMeaningBn: item.deeperMeaningBn || `আল্লাহ তাআলার পবিত্র বৈশিষ্ট্য '${item.transliterationBn}' স্মরণের মাধ্যমে অন্তরে তাঁর মহত্ত্ব প্রতিষ্ঠিত হয়।`,
-    duaWithThisNameBn: item.duaWithThisNameBn || `يَا ${item.arabic} اغْفِرْ لِي وَارْحَمْنِي`,
+    duaWithThisNameBn: item.duaWithThisNameBn || `يَا ${item.arabic} اغْفِرْ লِي وَارْحَمْنِي`,
     characterLessonBn: item.characterLessonBn || `${item.transliterationBn} নামের শিক্ষা ধারণ করে নিজের আচরণকে সংযত ও সুন্দর রাখা।`,
     lifeApplicationTaskBn: item.lifeApplicationTaskBn || `আজ অন্তত একবার এই পবিত্র নাম স্মরণ করে আল্লাহর কাছে আন্তরিক দোয়া করুন।`,
     lifeSituationsBn: item.lifeSituationsBn || ['ঈমানী শক্তি বৃদ্ধি', 'পারিবারিক শান্তি', 'বিপদাপদ থেকে মুক্তি'],
@@ -252,6 +270,12 @@ export function normalizeGenericToAmalCard(raw: any): UnifiedAmalCardData {
     evidenceLevel: raw.evidenceLevel || 'sahih_hadith',
     quranRefBn: raw.quranRefBn,
     hadithRefBn: raw.hadithRefBn || raw.sahihReferenceBn || raw.hadithSourceBn || 'সহিহ হাদিস সংকলন',
+    hadithVirtueBn: raw.hadithVirtueBn || raw.virtueBn,
+    testedVirtueBn: raw.testedVirtueBn || raw.virtueBn,
+    testedOutcomeBn: raw.testedOutcomeBn,
+    contextExplanationBn: raw.contextExplanationBn || raw.deeperMeaningBn,
+    detailedAmalRuleBn: raw.detailedAmalRuleBn,
+    amalConditionsBn: raw.amalConditionsBn,
     deeperMeaningBn: raw.deeperMeaningBn,
     duaWithThisNameBn: raw.duaWithThisNameBn,
     characterLessonBn: raw.characterLessonBn,

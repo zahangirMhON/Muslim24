@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Home,
   BookOpen,
@@ -13,7 +14,9 @@ import {
   ShieldCheck,
   Radio,
   Bell,
-  Sparkles
+  Sparkles,
+  Brain,
+  Heart
 } from 'lucide-react';
 
 import { BDLocation, CalendarDates, Language, PrayerTimeItem } from './types';
@@ -22,6 +25,7 @@ import { getTripleCalendarDates, BANGLADESH_LOCATIONS } from './utils/bengaliUti
 import { calculatePrayerTimes } from './utils/prayerTimes';
 import { QURAN_SURAHS } from './data/islamicData';
 import { resolveAudioUrlFromTitle } from './utils/audioResolver';
+import { playlistManager } from './services/audioPlaylistManager';
 
 import { Header } from './components/Header';
 import { AudioPlayerBar } from './components/AudioPlayerBar';
@@ -46,6 +50,9 @@ import { QuickDhikrModal } from './components/QuickDhikrModal';
 import { QuickDuaFab } from './components/QuickDuaFab';
 import { SmartIslamicNotificationPopup } from './components/SmartIslamicNotificationPopup';
 import { LockscreenTestOverlay } from './components/LockscreenTestOverlay';
+import { CareRoutineOperatingSystem } from './components/CareRoutineOperatingSystem';
+import { CareReportShareView } from './components/CareReportShareView';
+import { AlarmRingingOverlay } from './components/AlarmRingingOverlay';
 import { Footer } from './components/Footer';
 
 export default function App() {
@@ -53,6 +60,26 @@ export default function App() {
   const [lang, setLang] = useState<Language>('bn'); // Default Bengali (বাংলা)
   const [darkMode, setDarkMode] = useState<boolean>(true); // Default Dark Mode as requested
   const [activeTab, setActiveTab] = useState<'home' | 'quran' | 'prayer' | 'dhikr' | 'ai' | 'quiz' | 'qibla' | 'media' | 'focus' | 'admin'>('home');
+  const [mediaSubSection, setMediaSubSection] = useState<'radio' | 'care_os' | 'care_report'>('radio');
+
+  // Check if opened via share link for Care Report (Standalone Web App Shareable View)
+  const [isStandaloneReport, setIsStandaloneReport] = useState<boolean>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('care_report') === 'true' || params.get('report') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((current) => (current === msg ? null : current));
+    }, 4000);
+  };
   const [dataSaver, setDataSaver] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isNotifModalOpen, setIsNotifModalOpen] = useState<boolean>(false);
@@ -147,18 +174,57 @@ export default function App() {
     }
   }, [darkMode]);
 
+  // Global audio listener to sync popup player, folders, and 24/7 radio
+  useEffect(() => {
+    const handleGlobalPlay = (e: any) => {
+      if (e?.detail?.title && e?.detail?.url) {
+        setActiveAudioTitle(e.detail.title);
+        setActiveAudioUrl(e.detail.url);
+        setIsPlayingAudio(true);
+      }
+    };
+    window.addEventListener('global-play-track', handleGlobalPlay);
+    return () => window.removeEventListener('global-play-track', handleGlobalPlay);
+  }, []);
+
   const t = translations[lang];
 
-  const handlePlayAudio = (title: string, url: string) => {
+  const handlePlayAudio = (title: string, url: string, metadata?: any) => {
     const resolvedUrl = resolveAudioUrlFromTitle(title, url);
     if (activeAudioUrl === resolvedUrl && isPlayingAudio) {
       setIsPlayingAudio(false);
+      playlistManager.setPlayState(false);
     } else {
       setActiveAudioTitle(title);
       setActiveAudioUrl(resolvedUrl);
       setIsPlayingAudio(true);
+      playlistManager.syncActiveTrack(title, resolvedUrl, metadata);
     }
   };
+
+  // If accessed via standalone share link (?care_report=true or ?report=true), render only the report page
+  if (isStandaloneReport) {
+    return (
+      <div className={`min-h-screen transition-colors duration-300 font-sans ${darkMode ? 'bg-emerald-950 text-emerald-50' : 'bg-emerald-50/60 text-emerald-950'}`}>
+        <div className="max-w-4xl mx-auto p-3 sm:p-5">
+          <CareReportShareView
+            onBackToApp={() => {
+              setIsStandaloneReport(false);
+              try {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('care_report');
+                url.searchParams.delete('report');
+                url.searchParams.delete('range');
+                url.searchParams.delete('profile');
+                window.history.replaceState({}, '', url.toString());
+              } catch (e) {}
+            }}
+            onToast={showToast}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen transition-colors duration-300 font-sans ${darkMode ? 'bg-emerald-950 text-emerald-50' : 'bg-emerald-50/60 text-emerald-950'}`}>
@@ -190,254 +256,366 @@ export default function App() {
         
         {/* Navigation Tabs (Seamless switching between Home and specialized views) */}
         <nav className="flex items-center gap-1.5 overflow-x-auto pb-2 custom-scrollbar bg-emerald-900/40 p-1.5 rounded-2xl border border-emerald-700/40 backdrop-blur-md">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('home')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'home'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-emerald-200 hover:bg-emerald-800/60'
             }`}
           >
             <Home className="w-4 h-4" />
             <span>{t.home}</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('focus')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'focus'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-amber-300 hover:bg-emerald-800/60'
             }`}
           >
             <Sparkles className="w-4 h-4 text-amber-300" />
             <span>ইসলামিক ফোকাস</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('prayer')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'prayer'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-emerald-200 hover:bg-emerald-800/60'
             }`}
           >
             <Clock className="w-4 h-4" />
             <span>{t.prayer}</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('quran')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'quran'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-emerald-200 hover:bg-emerald-800/60'
             }`}
           >
             <BookOpen className="w-4 h-4" />
             <span>{t.quran}</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('dhikr')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'dhikr'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-emerald-200 hover:bg-emerald-800/60'
             }`}
           >
             <HeartHandshake className="w-4 h-4" />
             <span>{t.dhikr}</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('ai')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'ai'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-emerald-200 hover:bg-emerald-800/60'
             }`}
           >
             <Bot className="w-4 h-4" />
             <span>{t.aiAssistant}</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('quiz')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'quiz'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-emerald-200 hover:bg-emerald-800/60'
             }`}
           >
             <HelpCircle className="w-4 h-4" />
             <span>{t.quiz}</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('qibla')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'qibla'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-emerald-200 hover:bg-emerald-800/60'
             }`}
           >
             <Compass className="w-4 h-4" />
             <span>{t.qibla}</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('media')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'media'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-emerald-200 hover:bg-emerald-800/60'
             }`}
           >
             <Radio className="w-4 h-4" />
             <span>২৪/৭ মিডিয়া রেডিও</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('admin')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'admin'
-                ? 'bg-amber-400 text-emerald-950 shadow-md'
+                ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold'
                 : 'text-amber-300 hover:bg-emerald-800/60'
             }`}
           >
             <ShieldCheck className="w-4 h-4 text-amber-300" />
             <span>RAG মডারেশন ও আলেম পোর্টাল</span>
-          </button>
+          </motion.button>
         </nav>
 
-        {/* Tab View Contents */}
+        {/* Tab View Contents with AnimatePresence */}
+        <AnimatePresence mode="wait">
+          {activeTab === 'home' && (
+            <motion.div
+              key="tab-home"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              {/* Quick Teaser to Care OS inside Media */}
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => {
+                  setMediaSubSection('care_os');
+                  setActiveTab('media');
+                }}
+                className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950 via-teal-950 to-emerald-900 border-2 border-amber-400/80 text-white flex items-center justify-between gap-3 shadow-xl cursor-pointer hover:border-amber-300 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition">
+                    🧠
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-black text-amber-300 flex items-center gap-1.5">
+                      <span>২৪/৭ AI কেয়ার, লাইফ ও রুটিন অপারেটিং সিস্টেম</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-bold animate-pulse">
+                        চলমান
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-emerald-200 mt-0.5">
+                      ভয়েস ও টেক্সটে ওষুধ, পানি, ফিডিং ও আমল ট্র্যাক করুন • অটো শিডিউল ও ফোল্ডার এলার্ম
+                    </p>
+                  </div>
+                </div>
+                <button className="px-3 py-1.5 rounded-xl bg-amber-400 text-emerald-950 text-xs font-black shrink-0 shadow">
+                  ওপেন করুন →
+                </button>
+              </motion.div>
+              
+              {/* 1. Triple Calendar Card (বর্ষপঞ্জিকা) */}
+              <CalendarCard dates={calendarDates} lang={lang} />
 
-        {/* TAB 1: HOME DASHBOARD (User Requested Clean Hierarchy) */}
-        {activeTab === 'home' && (
-          <div className="space-y-6">
-            
-            {/* 1. Triple Calendar Card (বর্ষপঞ্জিকা) */}
-            <CalendarCard dates={calendarDates} lang={lang} />
+              {/* 2. Prayer Times Card (৫ ওয়াক্ত ফরয, নফল ও সূর্যোদয়/সূর্যাস্ত সেকশন) */}
+              <PrayerCard
+                schedule={prayerSchedule}
+                lang={lang}
+                locationName={`${selectedLocation.districtBn}`}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+              />
 
-            {/* 2. Prayer Times Card (৫ ওয়াক্ত ফরয, নফল ও সূর্যোদয়/সূর্যাস্ত সেকশন) */}
-            <PrayerCard
-              schedule={prayerSchedule}
-              lang={lang}
-              locationName={`${selectedLocation.districtBn}`}
-              onOpenSettings={() => setIsSettingsOpen(true)}
-            />
+              {/* 3. Unified Dhikr, Daily Duas & Asmaul Husna (দোয়া, জিকির ও ৯৯ নাম) */}
+              <TasbihCard lang={lang} onPlayAudio={handlePlayAudio} />
 
-            {/* 3. Unified Dhikr, Daily Duas & Asmaul Husna (দোয়া, জিকির ও ৯৯ নাম) */}
-            <TasbihCard lang={lang} onPlayAudio={handlePlayAudio} />
+              {/* 4. 24/7 Live Broadcast & Media Radio (সরাসরি সম্প্রচার) */}
+              <MediaEngineTab lang={lang} audioMode={audioMode} onToggleAudioMode={setAudioMode} />
 
-            {/* 4. 24/7 Live Broadcast & Media Radio (সরাসরি সম্প্রচার) */}
-            <MediaEngineTab lang={lang} audioMode={audioMode} onToggleAudioMode={setAudioMode} />
+              {/* 5. Islamic Life & AI Chat Guidance (ইসলামিক জীবন নির্দেশিকা) */}
+              <IslamicAiChat lang={lang} />
 
-            {/* 5. Islamic Life & AI Chat Guidance (ইসলামিক জীবন নির্দেশিকা) */}
-            <IslamicAiChat lang={lang} />
+              {/* 6. Quran 10 Ayats/day Goal (দৈনিক ১০টি কুরআনের আয়াত) */}
+              <QuranGoalCard
+                lang={lang}
+                onPlayAudio={handlePlayAudio}
+                currentlyPlayingUrl={activeAudioUrl}
+                isPlaying={isPlayingAudio}
+              />
 
-            {/* 6. Quran 10 Ayats/day Goal (দৈনিক ১০টি কুরআনের আয়াত) */}
-            <QuranGoalCard
-              lang={lang}
-              onPlayAudio={handlePlayAudio}
-              currentlyPlayingUrl={activeAudioUrl}
-              isPlaying={isPlayingAudio}
-            />
+              {/* 7. Daily Arabic Language Learning (প্রতিদিন সহজ আরবি ভাষা শিক্ষা) */}
+              <ArabicLearningCard lang={lang} />
 
-            {/* 7. Daily Arabic Language Learning (প্রতিদিন সহজ আরবি ভাষা শিক্ষা) */}
-            <ArabicLearningCard lang={lang} />
+              {/* 8. Islamic Quiz Section (দিন অনুযায়ী পরিবর্তনশীল কুইজ) */}
+              <QuizSection lang={lang} />
 
-            {/* 8. Islamic Quiz Section (দিন অনুযায়ী পরিবর্তনশীল কুইজ) */}
-            <QuizSection lang={lang} />
+              {/* 9. Community Amal Progress & Leaderboard Overview (সকলের অগ্রগতি ও পারফরম্যান্স ওভারভিউ) */}
+              <CommunityAmalLeaderboard onOpenUserProfile={() => setIsUserProfileOpen(true)} />
+            </motion.div>
+          )}
 
-            {/* 9. Community Amal Progress & Leaderboard Overview (সকলের অগ্রগতি ও পারফরম্যান্স ওভারভিউ) */}
-            <CommunityAmalLeaderboard onOpenUserProfile={() => setIsUserProfileOpen(true)} />
+          {activeTab === 'prayer' && (
+            <motion.div
+              key="tab-prayer"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <PrayerCard
+                schedule={prayerSchedule}
+                lang={lang}
+                locationName={`${selectedLocation.districtBn}`}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+              />
+              <QiblaCompass lang={lang} locationName={`${selectedLocation.districtBn}`} />
+            </motion.div>
+          )}
 
-          </div>
-        )}
+          {activeTab === 'quran' && (
+            <motion.div
+              key="tab-quran"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <QuranGoalCard
+                lang={lang}
+                onPlayAudio={handlePlayAudio}
+                currentlyPlayingUrl={activeAudioUrl}
+                isPlaying={isPlayingAudio}
+              />
+              <ArabicLearningCard lang={lang} />
+            </motion.div>
+          )}
 
-        {/* TAB 2: PRAYER VIEW */}
-        {activeTab === 'prayer' && (
-          <div className="space-y-6">
-            <PrayerCard
-              schedule={prayerSchedule}
-              lang={lang}
-              locationName={`${selectedLocation.districtBn}`}
-              onOpenSettings={() => setIsSettingsOpen(true)}
-            />
-            <QiblaCompass lang={lang} locationName={`${selectedLocation.districtBn}`} />
-          </div>
-        )}
+          {activeTab === 'dhikr' && (
+            <motion.div
+              key="tab-dhikr"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <TasbihCard lang={lang} onPlayAudio={handlePlayAudio} />
+            </motion.div>
+          )}
 
-        {/* TAB 3: QURAN VIEW */}
-        {activeTab === 'quran' && (
-          <div className="space-y-6">
-            <QuranGoalCard
-              lang={lang}
-              onPlayAudio={handlePlayAudio}
-              currentlyPlayingUrl={activeAudioUrl}
-              isPlaying={isPlayingAudio}
-            />
-            <ArabicLearningCard lang={lang} />
-          </div>
-        )}
+          {activeTab === 'ai' && (
+            <motion.div
+              key="tab-ai"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <IslamicAiChat lang={lang} />
+            </motion.div>
+          )}
 
-        {/* TAB 4: DHIKR & DUA VIEW (Unified Tasbih, Duas & Asmaul Husna) */}
-        {activeTab === 'dhikr' && (
-          <div className="space-y-6">
-            <TasbihCard lang={lang} onPlayAudio={handlePlayAudio} />
-          </div>
-        )}
+          {activeTab === 'quiz' && (
+            <motion.div
+              key="tab-quiz"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <QuizSection lang={lang} />
+            </motion.div>
+          )}
 
-        {/* TAB 5: ISLAMIC AI VIEW */}
-        {activeTab === 'ai' && (
-          <div className="space-y-6">
-            <IslamicAiChat lang={lang} />
-          </div>
-        )}
+          {activeTab === 'qibla' && (
+            <motion.div
+              key="tab-qibla"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <QiblaCompass lang={lang} locationName={`${selectedLocation.districtBn}`} />
+            </motion.div>
+          )}
 
-        {/* TAB 6: QUIZ VIEW */}
-        {activeTab === 'quiz' && (
-          <div className="space-y-6">
-            <QuizSection lang={lang} />
-          </div>
-        )}
+          {activeTab === 'media' && (
+            <motion.div
+              key="tab-media"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <MediaEngineTab 
+                lang={lang} 
+                audioMode={audioMode} 
+                onToggleAudioMode={setAudioMode}
+                onPlayAudio={handlePlayAudio}
+                currentlyPlayingUrl={activeAudioUrl}
+                isPlaying={isPlayingAudio}
+                onToast={showToast}
+                initialMediaSubSection={mediaSubSection}
+              />
+            </motion.div>
+          )}
 
-        {/* TAB 7: QIBLA VIEW */}
-        {activeTab === 'qibla' && (
-          <div className="space-y-6">
-            <QiblaCompass lang={lang} locationName={`${selectedLocation.districtBn}`} />
-          </div>
-        )}
+          {activeTab === 'focus' && (
+            <motion.div
+              key="tab-focus"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <IslamicFocusDashboard lang={lang} />
+            </motion.div>
+          )}
 
-        {/* TAB 8: 24/7 MEDIA RADIO ENGINE */}
-        {activeTab === 'media' && (
-          <div className="space-y-6">
-            <MediaEngineTab 
-              lang={lang} 
-              audioMode={audioMode} 
-              onToggleAudioMode={setAudioMode}
-              onPlayAudio={handlePlayAudio}
-              currentlyPlayingUrl={activeAudioUrl}
-              isPlaying={isPlayingAudio}
-            />
-          </div>
-        )}
-
-        {/* TAB 9: ISLAMIC FOCUS DASHBOARD */}
-        {activeTab === 'focus' && (
-          <div className="space-y-6">
-            <IslamicFocusDashboard lang={lang} />
-          </div>
-        )}
-
-        {/* TAB 10: ADMIN RAG MODERATION PORTAL */}
-        {activeTab === 'admin' && (
-          <div className="space-y-6">
-            <AdminRagPortal />
-          </div>
-        )}
+          {activeTab === 'admin' && (
+            <motion.div
+              key="tab-admin"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <AdminRagPortal />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </main>
 
@@ -503,6 +681,17 @@ export default function App() {
 
       {/* Lockscreen Test Countdown & Success Overlay Modal */}
       <LockscreenTestOverlay />
+
+      {/* Universal Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[999999] px-4 py-2.5 rounded-2xl bg-emerald-950/95 border-2 border-amber-400 text-white font-bold text-xs sm:text-sm shadow-2xl backdrop-blur-md flex items-center gap-2 max-w-[92vw] animate-fade-in">
+          <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Global 24/7 Smart Alarm Ringing Overlay (TTS, Audio & Marking Complete) */}
+      <AlarmRingingOverlay />
 
       {/* Global 24/7 Audio Player Bar */}
       {activeAudioUrl && (
