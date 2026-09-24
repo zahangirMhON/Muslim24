@@ -146,7 +146,12 @@ export const SmartIslamicNotificationPopup: React.FC<SmartIslamicNotificationPop
       const currentTimeStr = `${hh}:${mm}`;
 
       // 1. Check for Prayer Time / Wakt Arrival (Auto-Azan + Lockscreen Alert)
-      const currentPrayer = prayerSchedule.find(p => p.time === currentTimeStr);
+      const currentPrayer = prayerSchedule.find(p => {
+        const prayerDate = new Date(p.timestamp);
+        const pHour = prayerDate.getHours().toString().padStart(2, '0');
+        const pMin = prayerDate.getMinutes().toString().padStart(2, '0');
+        return `${pHour}:${pMin}` === currentTimeStr;
+      });
       if (currentPrayer && lastNotifiedKey !== `azan_${currentPrayer.nameEn}_${now.toDateString()}`) {
         setLastNotifiedKey(`azan_${currentPrayer.nameEn}_${now.toDateString()}`);
         
@@ -160,7 +165,7 @@ export const SmartIslamicNotificationPopup: React.FC<SmartIslamicNotificationPop
           message: isAutoAzanEnabled
             ? `মধুর আজান বাজছে। আজানের উত্তর দিন এবং আজান শেষে মাসনূন দোয়া পাঠ করুন।`
             : `জামায়াতে সালাত আদায় করার প্রস্তুতি নিন ও অজু করে নিন।`,
-          timeContext: `ওয়াক্ত: ${currentPrayer.time}`,
+          timeContext: `ওয়াক্ত: ${currentPrayer.azanTimeString || currentPrayer.timeString}`,
           actionText: isAutoAzanEnabled ? 'আজান বাজছে' : 'আজান শুনুন',
           audioTrack: azanTrack,
           badgeText: 'ওয়াক্ত ও আজান',

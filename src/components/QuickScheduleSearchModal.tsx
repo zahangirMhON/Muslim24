@@ -165,10 +165,9 @@ export const QuickScheduleSearchModal: React.FC<Props> = ({
       reciterOrScholar: scholar,
       startTime,
       endTime,
-      recurrence: 'DAILY',
+      recurrenceType: 'DAILY',
       audioStreamUrl: audioUrl || 'https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/1.mp3',
       backupStreamUrl: backupUrl || 'https://server8.mp3quran.net/afs/001.mp3',
-      isLiveStream: true,
       arabicVerseOrDhikr: arabicText || undefined,
       bengaliMeaning: bengaliMeaning || undefined,
       realLifeActionBn: realLifeAction || undefined

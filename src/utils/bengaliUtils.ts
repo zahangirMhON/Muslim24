@@ -8,8 +8,19 @@ export function toBengaliDigits(input: number | string): string {
 
 // Convert ordinal number to Bengali ordinal string (১ম, ২য়, ৩য়, ৪র্থ, ৫ম...)
 export function toBengaliOrdinal(num: number): string {
-  const ordinals = ['', '১ম', '২য়', '৩য়', '৪র্থ', '৫ম', '৬ষ্ঠ', '৭ম', '৮ম', '৯ম', '১০ম', '১১দশ', '১২দশ'];
+  const ordinals = ['', '১ম', '২য়', '৩য়', '৪র্থ', '৫ম', '৬ষ্ঠ', '৭ম', '৮ম', '৯ম', '১০ম', '১১তম', '১২তম'];
   return ordinals[num] || `${toBengaliDigits(num)}তম`;
+}
+
+// Enriched Month Detailed Info Interface
+export interface MonthDetailedInfo {
+  index: number; // 0-11
+  monthNum: number; // 1-12
+  nameBn: string;
+  ordinalBn: string; // '১ম মাস', '২য় মাস'
+  fractionBn: string; // '১/১২', '২/১২'
+  labelWithNumber: string; // '১. মুহররম (১ম মাস [১/১২])'
+  shortBadgeBn: string; // '[১/১২]'
 }
 
 // Bengali Months
@@ -18,10 +29,42 @@ export const BENGALI_MONTHS = [
   'কার্তিক', 'অগ্রহায়ণ', 'পৌষ', 'মাঘ', 'ফাল্গুন', 'চৈত্র'
 ];
 
+// Bengali Months Detailed with 1-12 month numbers & ordinals
+export const BENGALI_MONTHS_DETAILED: MonthDetailedInfo[] = [
+  { index: 0, monthNum: 1, nameBn: 'বৈশাখ', ordinalBn: '১ম মাস', fractionBn: '১/১২', labelWithNumber: 'বৈশাখ(১)', shortBadgeBn: '(১)' },
+  { index: 1, monthNum: 2, nameBn: 'জ্যৈষ্ঠ', ordinalBn: '২য় মাস', fractionBn: '২/১২', labelWithNumber: 'জ্যৈষ্ঠ(২)', shortBadgeBn: '(২)' },
+  { index: 2, monthNum: 3, nameBn: 'আষাঢ়', ordinalBn: '৩য় মাস', fractionBn: '৩/১২', labelWithNumber: 'আষাঢ়(৩)', shortBadgeBn: '(৩)' },
+  { index: 3, monthNum: 4, nameBn: 'শ্রাবণ', ordinalBn: '৪র্থ মাস', fractionBn: '৪/১২', labelWithNumber: 'শ্রাবণ(৪)', shortBadgeBn: '(৪)' },
+  { index: 4, monthNum: 5, nameBn: 'ভাদ্র', ordinalBn: '৫ম মাস', fractionBn: '৫/১২', labelWithNumber: 'ভাদ্র(৫)', shortBadgeBn: '(৫)' },
+  { index: 5, monthNum: 6, nameBn: 'আশ্বিন', ordinalBn: '৬ষ্ঠ মাস', fractionBn: '৬/১২', labelWithNumber: 'আশ্বিন(৬)', shortBadgeBn: '(৬)' },
+  { index: 6, monthNum: 7, nameBn: 'কার্তিক', ordinalBn: '৭ম মাস', fractionBn: '৭/১২', labelWithNumber: 'কার্তিক(৭)', shortBadgeBn: '(৭)' },
+  { index: 7, monthNum: 8, nameBn: 'অগ্রহায়ণ', ordinalBn: '৮ম মাস', fractionBn: '৮/১২', labelWithNumber: 'অগ্রহায়ণ(৮)', shortBadgeBn: '(৮)' },
+  { index: 8, monthNum: 9, nameBn: 'পৌষ', ordinalBn: '৯ম মাস', fractionBn: '৯/১২', labelWithNumber: 'পৌষ(৯)', shortBadgeBn: '(৯)' },
+  { index: 9, monthNum: 10, nameBn: 'মাঘ', ordinalBn: '১০ম মাস', fractionBn: '১০/১২', labelWithNumber: 'মাঘ(১০)', shortBadgeBn: '(১০)' },
+  { index: 10, monthNum: 11, nameBn: 'ফাল্গুন', ordinalBn: '১১তম মাস', fractionBn: '১১/১২', labelWithNumber: 'ফাল্গুন(১১)', shortBadgeBn: '(১১)' },
+  { index: 11, monthNum: 12, nameBn: 'চৈত্র', ordinalBn: '১২তম মাস', fractionBn: '১২/১২', labelWithNumber: 'চৈত্র(১২)', shortBadgeBn: '(১২)' }
+];
+
 // Hijri Months in Bengali
 export const HIJRI_MONTHS_BN = [
   'মুহররম', 'সফর', 'রবিউল আউয়াল', 'রবিউস সানী', 'জমাদিউল আউয়াল', 'জমাদিউস সানী',
   'রজব', 'শাবান', 'রমজান', 'শাওয়াল', 'জুলক্বাদ', 'জুলহিজ্জাহ'
+];
+
+// Hijri Months Detailed with 1-12 month numbers & ordinals
+export const HIJRI_MONTHS_DETAILED: MonthDetailedInfo[] = [
+  { index: 0, monthNum: 1, nameBn: 'মুহররম', ordinalBn: '১ম মাস', fractionBn: '১/১২', labelWithNumber: 'মুহররম(১)', shortBadgeBn: '(১)' },
+  { index: 1, monthNum: 2, nameBn: 'সফর', ordinalBn: '২য় মাস', fractionBn: '২/১২', labelWithNumber: 'সফর(২)', shortBadgeBn: '(২)' },
+  { index: 2, monthNum: 3, nameBn: 'রবিউল আউয়াল', ordinalBn: '৩য় মাস', fractionBn: '৩/১২', labelWithNumber: 'রবিউল আউয়াল(৩)', shortBadgeBn: '(৩)' },
+  { index: 3, monthNum: 4, nameBn: 'রবিউস সানী', ordinalBn: '৪র্থ মাস', fractionBn: '৪/১২', labelWithNumber: 'রবিউস সানী(৪)', shortBadgeBn: '(৪)' },
+  { index: 4, monthNum: 5, nameBn: 'জমাদিউল আউয়াল', ordinalBn: '৫ম মাস', fractionBn: '৫/১২', labelWithNumber: 'জমাদিউল আউয়াল(৫)', shortBadgeBn: '(৫)' },
+  { index: 5, monthNum: 6, nameBn: 'জমাদিউস সানী', ordinalBn: '৬ষ্ঠ মাস', fractionBn: '৬/১২', labelWithNumber: 'জমাদিউস সানী(৬)', shortBadgeBn: '(৬)' },
+  { index: 6, monthNum: 7, nameBn: 'রজব', ordinalBn: '৭ম মাস', fractionBn: '৭/১২', labelWithNumber: 'রজব(৭)', shortBadgeBn: '(৭)' },
+  { index: 7, monthNum: 8, nameBn: 'শাবান', ordinalBn: '৮ম মাস', fractionBn: '৮/১২', labelWithNumber: 'শাবান(৮)', shortBadgeBn: '(৮)' },
+  { index: 8, monthNum: 9, nameBn: 'রমজান', ordinalBn: '৯ম মাস', fractionBn: '৯/১২', labelWithNumber: 'রমজান(৯)', shortBadgeBn: '(৯)' },
+  { index: 9, monthNum: 10, nameBn: 'শাওয়াল', ordinalBn: '১০ম মাস', fractionBn: '১০/১২', labelWithNumber: 'শাওয়াল(১০)', shortBadgeBn: '(১০)' },
+  { index: 10, monthNum: 11, nameBn: 'জুলক্বাদ', ordinalBn: '১১তম মাস', fractionBn: '১১/১২', labelWithNumber: 'জুলক্বাদ(১১)', shortBadgeBn: '(১১)' },
+  { index: 11, monthNum: 12, nameBn: 'জুলহিজ্জাহ', ordinalBn: '১২তম মাস', fractionBn: '১২/১২', labelWithNumber: 'জুলহিজ্জাহ(১২)', shortBadgeBn: '(১২)' }
 ];
 
 // Gregorian Month names in Bengali
@@ -30,10 +73,133 @@ export const GREGORIAN_MONTHS_BN = [
   'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
 ];
 
+// Gregorian Months Detailed with 1-12 month numbers & ordinals
+export const GREGORIAN_MONTHS_DETAILED: MonthDetailedInfo[] = [
+  { index: 0, monthNum: 1, nameBn: 'জানুয়ারি', ordinalBn: '১ম মাস', fractionBn: '১/১২', labelWithNumber: 'জানুয়ারি(১)', shortBadgeBn: '(১)' },
+  { index: 1, monthNum: 2, nameBn: 'ফেব্রুয়ারি', ordinalBn: '২য় মাস', fractionBn: '২/১২', labelWithNumber: 'ফেব্রুয়ারি(২)', shortBadgeBn: '(২)' },
+  { index: 2, monthNum: 3, nameBn: 'মার্চ', ordinalBn: '৩য় মাস', fractionBn: '৩/১২', labelWithNumber: 'মার্চ(৩)', shortBadgeBn: '(৩)' },
+  { index: 3, monthNum: 4, nameBn: 'এপ্রিল', ordinalBn: '৪র্থ মাস', fractionBn: '৪/১২', labelWithNumber: 'এপ্রিল(৪)', shortBadgeBn: '(৪)' },
+  { index: 4, monthNum: 5, nameBn: 'মে', ordinalBn: '৫ম মাস', fractionBn: '৫/১২', labelWithNumber: 'মে(৫)', shortBadgeBn: '(৫)' },
+  { index: 5, monthNum: 6, nameBn: 'জুন', ordinalBn: '৬ষ্ঠ মাস', fractionBn: '৬/১২', labelWithNumber: 'জুন(৬)', shortBadgeBn: '(৬)' },
+  { index: 6, monthNum: 7, nameBn: 'জুলাই', ordinalBn: '৭ম মাস', fractionBn: '৭/১২', labelWithNumber: 'জুলাই(৭)', shortBadgeBn: '(৭)' },
+  { index: 7, monthNum: 8, nameBn: 'আগস্ট', ordinalBn: '৮ম মাস', fractionBn: '৮/১২', labelWithNumber: 'আগস্ট(৮)', shortBadgeBn: '(৮)' },
+  { index: 8, monthNum: 9, nameBn: 'সেপ্টেম্বর', ordinalBn: '৯ম মাস', fractionBn: '৯/১২', labelWithNumber: 'সেপ্টেম্বর(৯)', shortBadgeBn: '(৯)' },
+  { index: 9, monthNum: 10, nameBn: 'অক্টোবর', ordinalBn: '১০ম মাস', fractionBn: '১০/১২', labelWithNumber: 'অক্টোবর(১০)', shortBadgeBn: '(১০)' },
+  { index: 10, monthNum: 11, nameBn: 'নভেম্বর', ordinalBn: '১১তম মাস', fractionBn: '১১/১২', labelWithNumber: 'নভেম্বর(১১)', shortBadgeBn: '(১১)' },
+  { index: 11, monthNum: 12, nameBn: 'ডিসেম্বর', ordinalBn: '১২তম মাস', fractionBn: '১২/১২', labelWithNumber: 'ডিসেম্বর(১২)', shortBadgeBn: '(১২)' }
+];
+
 // Days in Bengali
 export const DAYS_BN = [
   'রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'
 ];
+
+/**
+ * Format month name with ordinal indicator and number (e.g. "সেপ্টেম্বর(৯)")
+ */
+export function formatMonthWithNumber(
+  monthIndex: number,
+  system: 'hijri' | 'gregorian' | 'bengali',
+  _style: 'compact' | 'bracket' | 'full' = 'compact'
+): string {
+  const list = system === 'hijri' ? HIJRI_MONTHS_DETAILED : system === 'gregorian' ? GREGORIAN_MONTHS_DETAILED : BENGALI_MONTHS_DETAILED;
+  const item = list[monthIndex] || list[0];
+  return `${item.nameBn}(${toBengaliDigits(item.monthNum)})`;
+}
+
+// Approximate Hijri month day lengths
+const HIJRI_MONTH_LENGTHS = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
+
+/**
+ * Calculate matching equivalent Gregorian and Bengali dates for any given Hijri date
+ * Always includes month names and 1-12 month numbers
+ */
+export function getEquivalentDatesForHijri(hijriDay: number, hijriMonthIndex: number, hijriYear: number = 1448) {
+  let dayOfYear = hijriDay;
+  for (let m = 0; m < hijriMonthIndex; m++) {
+    dayOfYear += HIJRI_MONTH_LENGTHS[m];
+  }
+  // Base calibration: July 27, 2026 is 12 Muharram 1448 (dayOfYear = 12)
+  const diffDays = dayOfYear - 12 + (hijriYear - 1448) * 354;
+  const targetDate = new Date(2026, 6, 27);
+  targetDate.setDate(targetDate.getDate() + diffDays);
+
+  const gDay = targetDate.getDate();
+  const gMonth = targetDate.getMonth();
+  const gYear = targetDate.getFullYear();
+  const gDayOfWeek = targetDate.getDay();
+  const gMonthInfo = GREGORIAN_MONTHS_DETAILED[gMonth];
+
+  const gFormatted = `${toBengaliDigits(gDay)} ${gMonthInfo.nameBn}(${toBengaliDigits(gMonthInfo.monthNum)}) ${toBengaliDigits(gYear)}`;
+  const gShort = `${toBengaliDigits(gDay)} ${gMonthInfo.nameBn}(${toBengaliDigits(gMonthInfo.monthNum)})`;
+
+  // Bengali calculation (Base: July 27, 2026 is 12 Srabon 1433 Bangabdo, Srabon index 3)
+  let bDay = 12 + diffDays;
+  let bMonth = 3;
+  let bYear = 1433;
+  while (bDay > 31) {
+    bDay -= 31;
+    bMonth++;
+    if (bMonth >= 12) {
+      bMonth = 0;
+      bYear++;
+    }
+  }
+  while (bDay < 1) {
+    bDay += 30;
+    bMonth--;
+    if (bMonth < 0) {
+      bMonth = 11;
+      bYear--;
+    }
+  }
+  const bMonthInfo = BENGALI_MONTHS_DETAILED[bMonth];
+  const bFormatted = `${toBengaliDigits(bDay)} ${bMonthInfo.nameBn}(${toBengaliDigits(bMonthInfo.monthNum)}) ${toBengaliDigits(bYear)} বঙ্গাব্দ`;
+  const bShort = `${toBengaliDigits(bDay)} ${bMonthInfo.nameBn}(${toBengaliDigits(bMonthInfo.monthNum)})`;
+
+  const hMonthInfo = HIJRI_MONTHS_DETAILED[hijriMonthIndex];
+  const hFormatted = `${toBengaliDigits(hijriDay)} ${hMonthInfo.nameBn}(${toBengaliDigits(hMonthInfo.monthNum)}) ${toBengaliDigits(hijriYear)} হিজরি`;
+  const hShort = `${toBengaliDigits(hijriDay)} ${hMonthInfo.nameBn}(${toBengaliDigits(hMonthInfo.monthNum)})`;
+
+  return {
+    targetDate,
+    dayOfWeekNameBn: DAYS_BN[gDayOfWeek],
+    hijri: {
+      day: hijriDay,
+      monthIndex: hijriMonthIndex,
+      monthNum: hijriMonthIndex + 1,
+      monthNameBn: hMonthInfo.nameBn,
+      monthOrdinalBn: hMonthInfo.ordinalBn,
+      monthFractionBn: hMonthInfo.fractionBn,
+      formatted: hFormatted,
+      short: hShort,
+      year: hijriYear
+    },
+    gregorian: {
+      day: gDay,
+      monthIndex: gMonth,
+      monthNum: gMonth + 1,
+      monthNameBn: gMonthInfo.nameBn,
+      monthOrdinalBn: gMonthInfo.ordinalBn,
+      monthFractionBn: gMonthInfo.fractionBn,
+      formatted: gFormatted,
+      short: gShort,
+      year: gYear
+    },
+    bengali: {
+      day: bDay,
+      monthIndex: bMonth,
+      monthNum: bMonth + 1,
+      monthNameBn: bMonthInfo.nameBn,
+      monthOrdinalBn: bMonthInfo.ordinalBn,
+      monthFractionBn: bMonthInfo.fractionBn,
+      formatted: bFormatted,
+      short: bShort,
+      year: bYear
+    },
+    equivalentSummaryBn: `সম্ভাব্য ইংরেজি: ${gShort} • সম্ভাব্য বাংলা: ${bShort}`
+  };
+}
 
 /**
  * Calculate Triple Calendar Dates with numeric practice format & day name
@@ -49,10 +215,11 @@ export function getTripleCalendarDates(date: Date = new Date()): CalendarDates {
   const monthPad = monthNum < 10 ? `0${monthNum}` : `${monthNum}`;
 
   // Gregorian Formatted
+  const gMonthInfo = GREGORIAN_MONTHS_DETAILED[month];
   const gregorianDayName = DAYS_BN[dayOfWeek];
-  const gregorianFormatted = `${toBengaliDigits(day)} ${GREGORIAN_MONTHS_BN[month]} ${toBengaliDigits(year)}, ${gregorianDayName}`;
+  const gregorianFormatted = `${toBengaliDigits(day)} ${gMonthInfo.nameBn}(${toBengaliDigits(gMonthInfo.monthNum)}) ${toBengaliDigits(year)}, ${gregorianDayName}`;
   const gregorianNumeric = `${toBengaliDigits(dayPad)}/${toBengaliDigits(monthPad)}/${toBengaliDigits(year)}`;
-  const gregorianMonthPractice = `${toBengaliOrdinal(monthNum)} মাস (${GREGORIAN_MONTHS_BN[month]})`;
+  const gregorianMonthPractice = `${gMonthInfo.nameBn}(${toBengaliDigits(gMonthInfo.monthNum)})`;
 
   // Hijri Calculation (Calibrated for 2026 July 27 -> 12 Muharram 1448)
   const baseGregorianTime = new Date(2026, 6, 27).getTime(); // July 27 2026
@@ -82,10 +249,11 @@ export function getTripleCalendarDates(date: Date = new Date()): CalendarDates {
   const hDayPad = hijriDay < 10 ? `0${hijriDay}` : `${hijriDay}`;
   const hMonthNum = hijriMonth + 1;
   const hMonthPad = hMonthNum < 10 ? `0${hMonthNum}` : `${hMonthNum}`;
+  const hMonthInfo = HIJRI_MONTHS_DETAILED[hijriMonth];
 
-  const hijriFormatted = `${toBengaliDigits(hijriDay)} ${HIJRI_MONTHS_BN[hijriMonth]} ${toBengaliDigits(hijriYear)} হিজরি`;
+  const hijriFormatted = `${toBengaliDigits(hijriDay)} ${hMonthInfo.nameBn}(${toBengaliDigits(hMonthInfo.monthNum)}) ${toBengaliDigits(hijriYear)} হিজরি`;
   const hijriNumeric = `${toBengaliDigits(hDayPad)}/${toBengaliDigits(hMonthPad)}/${toBengaliDigits(hijriYear)}`;
-  const hijriMonthPractice = `${toBengaliOrdinal(hMonthNum)} মাস (${HIJRI_MONTHS_BN[hijriMonth]})`;
+  const hijriMonthPractice = `${hMonthInfo.nameBn}(${toBengaliDigits(hMonthInfo.monthNum)})`;
 
   // Bengali Calendar Calculation (Calibrated for 2026 July 27 -> 12 Srabon 1433 Bangabdo)
   let bengaliDay = 12 + diffDays;
@@ -112,10 +280,11 @@ export function getTripleCalendarDates(date: Date = new Date()): CalendarDates {
   const bDayPad = bengaliDay < 10 ? `0${bengaliDay}` : `${bengaliDay}`;
   const bMonthNum = bengaliMonth + 1;
   const bMonthPad = bMonthNum < 10 ? `0${bMonthNum}` : `${bMonthNum}`;
+  const bMonthInfo = BENGALI_MONTHS_DETAILED[bengaliMonth];
 
-  const bengaliFormatted = `${toBengaliDigits(bengaliDay)} ${BENGALI_MONTHS[bengaliMonth]} ${toBengaliDigits(bengaliYear)} বঙ্গাব্দ`;
+  const bengaliFormatted = `${toBengaliDigits(bengaliDay)} ${bMonthInfo.nameBn}(${toBengaliDigits(bMonthInfo.monthNum)}) ${toBengaliDigits(bengaliYear)} বঙ্গাব্দ`;
   const bengaliNumeric = `${toBengaliDigits(bDayPad)}/${toBengaliDigits(bMonthPad)}/${toBengaliDigits(bengaliYear)}`;
-  const bengaliMonthPractice = `${toBengaliOrdinal(bMonthNum)} মাস (${BENGALI_MONTHS[bengaliMonth]})`;
+  const bengaliMonthPractice = `${bMonthInfo.nameBn}(${toBengaliDigits(bMonthInfo.monthNum)})`;
 
   return {
     gregorianFormatted,

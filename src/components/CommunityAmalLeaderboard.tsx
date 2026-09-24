@@ -127,39 +127,47 @@ export const CommunityAmalLeaderboard: React.FC<CommunityAmalLeaderboardProps> =
         setCurrentUserData(currentUserEntry);
       }
 
-      // Try fetching real registered users from Firestore if any
-      try {
-        const usersSnap = await getDocs(query(collection(db, 'users'), limit(10)));
-        const liveMembers: CommunityAmalUser[] = [];
-
-        usersSnap.forEach(docSnap => {
-          const data = docSnap.data();
-          if (data.displayName && (!user || data.uid !== user.uid)) {
-            liveMembers.push({
-              uid: data.uid || docSnap.id,
-              displayName: data.displayName,
-              photoURL: data.photoURL,
-              roleBadge: data.role === 'admin' ? '👑 মুফতী / অ্যাডমিন' : '🌟 আবেদ',
-              todayCompletedCount: 7 + (data.displayName.length % 4),
-              todayTotalCount: 10,
-              todayPercent: Math.min(100, 70 + (data.displayName.length * 4) % 30),
-              weeklyPercent: 80 + (data.displayName.length % 15),
-              streakDays: 4 + (data.displayName.length % 12),
-              dhikrCount: 200 + (data.displayName.length * 25),
-              lastActive: 'আজকে সক্রিয়',
-              topAmals: ['৫ ওয়াক্ত সালাত', 'কুরআন ও দোয়া', 'তসবিহ জিকির']
+      // Try fetching real registered users from Firestore if user is authenticated
+      if (user) {
+        try {
+          const timeoutPromise = new Promise<null>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500));
+          const fetchPromise = getDocs(query(collection(db, 'users'), limit(10)));
+          const usersSnap = await Promise.race([fetchPromise, timeoutPromise]) as any;
+          
+          if (usersSnap && usersSnap.docs) {
+            const liveMembers: CommunityAmalUser[] = [];
+            usersSnap.forEach((docSnap: any) => {
+              const data = docSnap.data();
+              if (data.displayName && data.uid !== user.uid) {
+                liveMembers.push({
+                  uid: data.uid || docSnap.id,
+                  displayName: data.displayName,
+                  photoURL: data.photoURL,
+                  roleBadge: data.role === 'admin' ? '👑 মুফতী / অ্যাডমিন' : '🌟 আবেদ',
+                  todayCompletedCount: 7 + (data.displayName.length % 4),
+                  todayTotalCount: 10,
+                  todayPercent: Math.min(100, 70 + (data.displayName.length * 4) % 30),
+                  weeklyPercent: 80 + (data.displayName.length % 15),
+                  streakDays: 4 + (data.displayName.length % 12),
+                  dhikrCount: 200 + (data.displayName.length * 25),
+                  lastActive: 'আজকে সক্রিয়',
+                  topAmals: ['৫ ওয়াক্ত সালাত', 'কুরআন ও দোয়া', 'তসবিহ জিকির']
+                });
+              }
             });
-          }
-        });
 
-        if (liveMembers.length > 0) {
-          // Combine live with base
-          setCommunityUsers([...liveMembers, ...baseCommunityMembers]);
-        } else {
+            if (liveMembers.length > 0) {
+              setCommunityUsers([...liveMembers, ...baseCommunityMembers]);
+            } else {
+              setCommunityUsers(baseCommunityMembers);
+            }
+          } else {
+            setCommunityUsers(baseCommunityMembers);
+          }
+        } catch {
           setCommunityUsers(baseCommunityMembers);
         }
-      } catch (err) {
-        // Fallback gracefully
+      } else {
         setCommunityUsers(baseCommunityMembers);
       }
     } catch (e) {

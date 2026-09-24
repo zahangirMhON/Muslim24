@@ -9,11 +9,16 @@ import {
   CheckCircle2,
   Info,
   CalendarDays,
-  ShieldCheck
+  ShieldCheck,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 import { CalendarDates, Language } from '../types';
 import { translations } from '../locales/translations';
 import { FullMonthCalendar } from './FullMonthCalendar';
+import { UnifiedDayLifeConnectionModal } from './UnifiedDayLifeConnectionModal';
+import { InteractiveKeywordBadge } from './InteractiveKeywordBadge';
+import { TripleYearCycleProgressChart } from './TripleYearCycleProgressChart';
 
 interface CalendarCardProps {
   dates: CalendarDates;
@@ -159,6 +164,7 @@ const ALL_ISLAMIC_EVENTS = [
 export const CalendarCard: React.FC<CalendarCardProps> = ({ dates, lang }) => {
   const t = translations[lang];
   const [showAllEvents, setShowAllEvents] = useState<boolean>(false);
+  const [isUnifiedModalOpen, setIsUnifiedModalOpen] = useState<boolean>(false);
 
   const contemporaryEvents = ALL_ISLAMIC_EVENTS.filter(e => e.isContemporary);
   const displayedEvents = showAllEvents ? ALL_ISLAMIC_EVENTS : contemporaryEvents;
@@ -181,62 +187,202 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ dates, lang }) => {
           </p>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-400/50 shadow">
-          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-          <span>আজকের বার: {dates.gregorianDayName}</span>
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsUnifiedModalOpen(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-400 text-slate-950 hover:bg-amber-300 transition shadow cursor-pointer font-sans"
+            title="আজকের তারিখের সাথে সকল সেকশন কানেকশন ও আমল প্রগ্রেস দেখুন"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>আজকের পূর্ণ সংযোগ ও আমল</span>
+          </button>
+          <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-400/50 shadow">
+            <span>বার: {dates.gregorianDayName}</span>
+          </span>
+        </div>
       </div>
 
-      {/* 2. Today's Triple Calendar Live Display (Minimalist Clean Design) */}
+      {/* 2. Today's Triple Calendar Live Display (Minimalist Clean Design - Clickable) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         
         {/* Gregorian Calendar */}
-        <div className="bg-emerald-950/80 backdrop-blur p-3.5 rounded-xl border border-teal-500/40 hover:border-teal-400 transition group shadow-inner flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-medium text-teal-300 mb-1.5">
-            <span className="font-bold flex items-center gap-1">📅 {t.gregorianDateLabel}</span>
-            <span className="bg-teal-500/20 text-teal-200 px-2 py-0.5 rounded text-[10px] border border-teal-500/40 font-mono font-bold">
-              {dates.gregorianNumeric}
-            </span>
+        <div
+          onClick={() => setIsUnifiedModalOpen(true)}
+          className="bg-emerald-950/80 backdrop-blur p-3.5 rounded-xl border border-teal-500/40 hover:border-teal-300 transition group shadow-inner flex flex-col justify-between cursor-pointer hover:scale-[1.01] active:scale-[0.99] space-y-2"
+          title="ক্লিক করে এই তারিখের সাথে সকল সেকশনের তথ্য একত্রীকরণ দেখুন"
+        >
+          <div>
+            <div className="flex items-center justify-between text-xs font-medium text-teal-300 mb-1.5 flex-wrap gap-1">
+              <span className="font-bold flex items-center gap-1">📅 {t.gregorianDateLabel}</span>
+              <div className="flex items-center gap-1">
+                <span className="bg-teal-500/20 text-teal-200 px-1.5 py-0.5 rounded text-[10px] border border-teal-500/40 font-mono font-bold">
+                  {dates.gregorianNumeric}
+                </span>
+                <span className="bg-teal-400/25 text-teal-100 px-2 py-0.5 rounded text-[10px] font-bold border border-teal-400/40 uppercase tracking-wide shadow-sm">
+                  🗓️ {dates.gregorianMonthPractice}
+                </span>
+              </div>
+            </div>
+
+            <div className="text-base sm:text-lg font-extrabold text-teal-50 group-hover:text-amber-200 transition py-0.5">
+              {dates.gregorianFormatted}
+            </div>
+
+            <div className="text-[11px] text-teal-200/90 font-medium pt-1 bg-black/30 px-2 py-1 rounded-lg border border-white/5 space-y-0.5">
+              <div className="text-[10px] text-teal-400 font-bold uppercase">সম্ভাব্য সমতুল্য অন্যান্য সন:</div>
+              <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                <span className="text-amber-300">🌙 হিজরি: {dates.hijriFormatted.replace(' হিজরি', '')}</span>
+                <span className="text-gray-500">•</span>
+                <span className="text-emerald-300">🌾 বাংলা: {dates.bengaliFormatted.replace(' বঙ্গাব্দ', '')}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="text-base sm:text-lg font-extrabold text-teal-50 group-hover:text-amber-200 transition py-1">
-            {dates.gregorianFormatted}
+          <div className="text-[10px] text-teal-300/80 font-medium pt-1 flex items-center justify-between border-t border-white/5">
+            <span>সকল সেকশন সংযোগ ও আমল</span>
+            <span>➔</span>
           </div>
         </div>
 
         {/* Hijri Calendar */}
-        <div className="bg-emerald-950/80 backdrop-blur p-3.5 rounded-xl border border-amber-500/50 hover:border-amber-400 transition group shadow-inner flex flex-col justify-between ring-1 ring-amber-400/30">
-          <div className="flex items-center justify-between text-xs font-medium text-amber-300 mb-1.5">
-            <span className="font-bold flex items-center gap-1">🌙 {t.hijriDateLabel}</span>
-            <span className="bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded text-[10px] border border-amber-500/40 font-mono font-bold">
-              {dates.hijriNumeric}
-            </span>
+        <div
+          onClick={() => setIsUnifiedModalOpen(true)}
+          className="bg-emerald-950/80 backdrop-blur p-3.5 rounded-xl border border-amber-500/50 hover:border-amber-300 transition group shadow-inner flex flex-col justify-between ring-1 ring-amber-400/30 cursor-pointer hover:scale-[1.01] active:scale-[0.99] space-y-2"
+          title="ক্লিক করে হিজরি ১ বছরের অবস্থান, চাঁদের দশা ও আমল দেখুন"
+        >
+          <div>
+            <div className="flex items-center justify-between text-xs font-medium text-amber-300 mb-1.5 flex-wrap gap-1">
+              <span className="font-bold flex items-center gap-1">🌙 {t.hijriDateLabel}</span>
+              <div className="flex items-center gap-1">
+                <span className="bg-amber-500/20 text-amber-200 px-1.5 py-0.5 rounded text-[10px] border border-amber-500/40 font-mono font-bold">
+                  {dates.hijriNumeric}
+                </span>
+                <span className="bg-amber-400/25 text-amber-100 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-400/40 uppercase tracking-wide shadow-sm">
+                  🗓️ {dates.hijriMonthPractice}
+                </span>
+              </div>
+            </div>
+
+            <div className="text-base sm:text-lg font-extrabold text-amber-100 group-hover:text-amber-300 transition py-0.5">
+              {dates.hijriFormatted}
+            </div>
+
+            <div className="text-[11px] text-amber-200/90 font-medium pt-1 bg-black/30 px-2 py-1 rounded-lg border border-white/5 space-y-0.5">
+              <div className="text-[10px] text-amber-400 font-bold uppercase">সম্ভাব্য সমতুল্য অন্যান্য সন:</div>
+              <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                <span className="text-blue-300">📅 ইংরেজি: {dates.gregorianFormatted.split(',')[0]}</span>
+                <span className="text-gray-500">•</span>
+                <span className="text-emerald-300">🌾 বাংলা: {dates.bengaliFormatted.replace(' বঙ্গাব্দ', '')}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="text-base sm:text-lg font-extrabold text-amber-100 group-hover:text-amber-300 transition py-1">
-            {dates.hijriFormatted}
+          <div className="text-[10px] text-amber-300/80 font-medium pt-1 flex items-center justify-between border-t border-white/5">
+            <span>চন্দ্রবছর ও আমল সংযোগ</span>
+            <span>➔</span>
           </div>
         </div>
 
         {/* Bengali Calendar */}
-        <div className="bg-emerald-950/80 backdrop-blur p-3.5 rounded-xl border border-emerald-600/50 hover:border-emerald-400 transition group shadow-inner flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-medium text-emerald-300 mb-1.5">
-            <span className="font-bold flex items-center gap-1">🌾 {t.bengaliDateLabel}</span>
-            <span className="bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded text-[10px] border border-emerald-500/40 font-mono font-bold">
-              {dates.bengaliNumeric}
-            </span>
+        <div
+          onClick={() => setIsUnifiedModalOpen(true)}
+          className="bg-emerald-950/80 backdrop-blur p-3.5 rounded-xl border border-emerald-600/50 hover:border-emerald-300 transition group shadow-inner flex flex-col justify-between cursor-pointer hover:scale-[1.01] active:scale-[0.99] space-y-2"
+          title="ক্লিক করে বাংলা পঞ্জিকার সংযোগ দেখুন"
+        >
+          <div>
+            <div className="flex items-center justify-between text-xs font-medium text-emerald-300 mb-1.5 flex-wrap gap-1">
+              <span className="font-bold flex items-center gap-1">🌾 {t.bengaliDateLabel}</span>
+              <div className="flex items-center gap-1">
+                <span className="bg-emerald-500/20 text-emerald-200 px-1.5 py-0.5 rounded text-[10px] border border-emerald-500/40 font-mono font-bold">
+                  {dates.bengaliNumeric}
+                </span>
+                <span className="bg-emerald-400/25 text-emerald-100 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-400/40 uppercase tracking-wide shadow-sm">
+                  🗓️ {dates.bengaliMonthPractice}
+                </span>
+              </div>
+            </div>
+
+            <div className="text-base sm:text-lg font-extrabold text-emerald-100 group-hover:text-emerald-300 transition py-0.5">
+              {dates.bengaliFormatted}
+            </div>
+
+            <div className="text-[11px] text-emerald-200/90 font-medium pt-1 bg-black/30 px-2 py-1 rounded-lg border border-white/5 space-y-0.5">
+              <div className="text-[10px] text-emerald-400 font-bold uppercase">সম্ভাব্য সমতুল্য অন্যান্য সন:</div>
+              <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                <span className="text-blue-300">📅 ইংরেজি: {dates.gregorianFormatted.split(',')[0]}</span>
+                <span className="text-gray-500">•</span>
+                <span className="text-amber-300">🌙 হিজরি: {dates.hijriFormatted.replace(' হিজরি', '')}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="text-base sm:text-lg font-extrabold text-emerald-100 group-hover:text-emerald-300 transition py-1">
-            {dates.bengaliFormatted}
+          <div className="text-[10px] text-emerald-300/80 font-medium pt-1 flex items-center justify-between border-t border-white/5">
+            <span>পঞ্জিকা ও আমল সংযোগ</span>
+            <span>➔</span>
           </div>
         </div>
 
       </div>
 
+      {/* 2.1 Unified Day & Life Connected Bar */}
+      <div className="bg-gradient-to-r from-amber-400/15 via-emerald-800/30 to-teal-800/25 p-3 sm:p-3.5 rounded-xl border border-amber-400/40 flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-inner">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black">
+              সংযোগ ও মার্জড পোর্টাল
+            </span>
+            <span className="text-xs font-bold text-amber-300">
+              আজকের তারিখের সাথে কুরআন, সালাত, আমল ও প্রগ্রেসের সম্পূর্ণ সংযোগ
+            </span>
+          </div>
+          <p className="text-[11px] text-emerald-200">
+            পূর্ণ চাঁদের বয়স, হিজরি ১ বছরের চক্র, তাহাজ্জুদ ও ৫ ওয়াক্ত, নির্ধারিত সূরা ও আয়াত এবং লাইভ আমল কাউন্টার
+          </p>
+        </div>
+
+        <button
+          onClick={() => setIsUnifiedModalOpen(true)}
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs transition shadow cursor-pointer flex items-center gap-1.5 shrink-0"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>১ ক্লিকে আজকের সংযোগ দেখুন</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* 2.2 TRIPLE YEAR CYCLE PROGRESS CHART (চলতি হিজরি ৩৫৪ দিন, ইংরেজি ৩৬৫ দিন ও বাংলা ৩৬৫ দিন বর্ষচক্র) */}
+      <TripleYearCycleProgressChart
+        currentDate={new Date()}
+        onOpenDayModal={() => setIsUnifiedModalOpen(true)}
+      />
+
       {/* 3. FULL MONTHLY INTERACTIVE TRIPLE CALENDAR (Directly Below Panjika as Requested) */}
       <div className="pt-2">
         <FullMonthCalendar />
+      </div>
+
+      {/* 3.1 Quick Banner to 1-Year Countdown & Advance Preparation */}
+      <div className="bg-gradient-to-r from-amber-500/20 via-emerald-950 to-amber-950/40 border border-amber-400/60 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl p-1.5 rounded-lg bg-amber-400/20 text-amber-300 border border-amber-400/40">⏳</span>
+          <div>
+            <h4 className="text-xs sm:text-sm font-black text-amber-200">
+              আরবি হিজরি বর্ষের বিশেষ দিনগুলোর ১ বছরের লাইভ কাউন্টার ও নতুন বর্ষের আগাম প্রস্তুতি
+            </h4>
+            <p className="text-[11px] text-emerald-200">
+              কত দিন বাকি আছে, প্রতিটি দিনের ১ বছরের কাউন্টডাউন এবং আত্মিক মুহাসাবাহ ও সংকল্প
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            const el = document.getElementById('hijri-countdown-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shrink-0 cursor-pointer shadow transition"
+        >
+          কাউন্টডাউন ও প্রস্তুতি দেখুন ↓
+        </button>
       </div>
 
       {/* 4. UPCOMING ISLAMIC EVENTS & PROPHETIC/SAHABA MILESTONES */}
@@ -305,6 +451,16 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ dates, lang }) => {
           ))}
         </div>
       </div>
+
+      {/* Unified Day Life Connection Modal (আজকের তারিখের সাথে সকল সেকশন কানেকশন ও আমল প্রগ্রেস) */}
+      <UnifiedDayLifeConnectionModal
+        isOpen={isUnifiedModalOpen}
+        selectedDate={new Date()}
+        onClose={() => setIsUnifiedModalOpen(false)}
+        onNavigateTab={(tab) => {
+          window.dispatchEvent(new CustomEvent('switch-main-tab', { detail: { tab } }));
+        }}
+      />
 
     </div>
   );

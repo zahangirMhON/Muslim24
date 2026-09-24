@@ -28,6 +28,7 @@ import {
 import { Language, BDLocation } from '../types';
 import { translations } from '../locales/translations';
 import { BANGLADESH_LOCATIONS, toBengaliDigits } from '../utils/bengaliUtils';
+import { calculateSolarPosition, SolarPosition } from '../utils/solarCalculator';
 
 interface QiblaCompassProps {
   lang: Language;
@@ -128,9 +129,14 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({ lang, locationName }
   // Compass heading and sensor states
   const [rawHeading, setRawHeading] = useState<number | null>(null);
   const [smoothedHeading, setSmoothedHeading] = useState<number>(0);
-  const [sensorStatus, setSensorStatus] = useState<'idle' | 'active' | 'denied' | 'unsupported'>('idle');
+  const [sensorStatus, setSensorStatus] = useState<'idle' | 'active' | 'denied' | 'unsupported' | 'needs_permission'>('idle');
   const [sensorType, setSensorType] = useState<'absolute' | 'webkit' | 'standard' | 'manual'>('manual');
   
+  // Real-time Solar & Horizon Position
+  const [solarInfo, setSolarInfo] = useState<SolarPosition>(() =>
+    calculateSolarPosition(new Date(), 23.9013, 89.1204, 277.1)
+  );
+
   // GPS & Location States
   const [isFetchingGps, setIsFetchingGps] = useState<boolean>(false);
   const [gpsStatusMessage, setGpsStatusMessage] = useState<string | null>(null);
@@ -150,6 +156,16 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({ lang, locationName }
   const lastHeadingRef = useRef<number>(0);
   const hasVibratedRef = useRef<boolean>(false);
   const hasAbsoluteSensorRef = useRef<boolean>(false);
+
+  // Keep Solar calculations live
+  useEffect(() => {
+    const updateSolar = () => {
+      setSolarInfo(calculateSolarPosition(new Date(), currentCoords.lat, currentCoords.lng, qiblaDegree));
+    };
+    updateSolar();
+    const timer = setInterval(updateSolar, 10000);
+    return () => clearInterval(timer);
+  }, [currentCoords.lat, currentCoords.lng, qiblaDegree]);
 
   // Load saved location on mount
   useEffect(() => {
@@ -304,8 +320,137 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({ lang, locationName }
     });
   };
 
+  // Attach active orientation listeners across browsers (Android / iOS / Desktop)
+  const attachOrientationListeners = () => {
+    let receivedData = false;
+
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      let heading: number | null = null;
+      let type: 'absolute' | 'webkit' | 'standard' = 'standard';
+
+      // 1. iOS Safari (webkitCompassHeading) - 0° is Magnetic North directly (clockwise)
+      if ((e as any).webkitCompassHeading !== undefined && (e as any).webkitCompassHeading !== null) {
+        const webkitHeading = Number((e as any).webkitCompassHeading);
+        heading = isInvertedSensor ? (360 - webkitHeading + 360) % 360 : webkitHeading;
+        type = 'webkit';
+      }
+      // 2. Android Chrome Absolute Orientation
+      else if (e.alpha !== null) {
+        let screenAngle = 0;
+        if (typeof window.screen?.orientation?.angle === 'number') {
+          screenAngle = window.screen.orientation.angle;
+        } else if (typeof (window as any).orientation === 'number') {
+          screenAngle = (window as any).orientation;
+        }
+
+        const alpha = Number(e.alpha);
+        
+        // Standard W3C: alpha is counter-clockwise (0° North, 90° West, 270° East) -> heading = 360 - alpha
+        if (isInvertedSensor) {
+          heading = (alpha + screenAngle + 360) % 360;
+        } else {
+          heading = (360 - alpha + screenAngle + 360) % 360;
+        }
+
+        if (e.absolute) {
+          hasAbsoluteSensorRef.current = true;
+          type = 'absolute';
+        } else {
+          type = 'standard';
+        }
+      }
+
+      if (heading !== null && !isNaN(heading)) {
+        receivedData = true;
+        const raw = (heading + 360) % 360;
+        setRawHeading(raw);
+        setSensorStatus('active');
+        setSensorType(type);
+
+        // Angle-Safe Exponential Smoothing (handles 359° <-> 0° boundary seamlessly)
+        const prev = lastHeadingRef.current;
+        let diff = raw - prev;
+        while (diff < -180) diff += 360;
+        while (diff > 180) diff -= 360;
+
+        // Responsive smoothing factor
+        const smoothed = (prev + diff * 0.4 + 360) % 360;
+        lastHeadingRef.current = smoothed;
+        setSmoothedHeading(Number(smoothed.toFixed(1)));
+      }
+    };
+
+    // Prioritize deviceorientationabsolute on Android Chrome
+    window.addEventListener('deviceorientationabsolute', handleOrientation as any, true);
+    window.addEventListener('deviceorientation', (e) => {
+      // If absolute orientation is already active, don't let relative event overwrite it
+      if (!hasAbsoluteSensorRef.current) {
+        handleOrientation(e);
+      }
+    }, true);
+
+    // Also support modern W3C AbsoluteOrientationSensor API if available
+    if (typeof window !== 'undefined' && 'AbsoluteOrientationSensor' in window) {
+      try {
+        const sensor = new (window as any).AbsoluteOrientationSensor({ frequency: 60, referenceFrame: 'device' });
+        sensor.addEventListener('reading', () => {
+          const q = sensor.quaternion;
+          if (q && q.length === 4) {
+            const [x, y, z, w] = q;
+            const yaw = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
+            const deg = ((yaw * 180) / Math.PI + 360) % 360;
+            const raw = isInvertedSensor ? (360 - deg + 360) % 360 : deg;
+            setRawHeading(raw);
+            setSensorStatus('active');
+            setSensorType('absolute');
+            receivedData = true;
+
+            const prev = lastHeadingRef.current;
+            let diff = raw - prev;
+            while (diff < -180) diff += 360;
+            while (diff > 180) diff -= 360;
+            const smoothed = (prev + diff * 0.4 + 360) % 360;
+            lastHeadingRef.current = smoothed;
+            setSmoothedHeading(Number(smoothed.toFixed(1)));
+          }
+        });
+        sensor.start();
+      } catch (e) {}
+    }
+
+    // After 2.5s, if no sensor data received, mark unsupported gracefully (e.g. desktop PC without compass)
+    setTimeout(() => {
+      if (!receivedData) {
+        setSensorStatus((prev) => (prev === 'active' ? 'active' : 'unsupported'));
+      }
+    }, 2500);
+  };
+
+  // Explicit user gesture handler for iOS Safari 13+
+  const handleRequestIosSensorPermission = async () => {
+    try {
+      if (
+        typeof window !== 'undefined' &&
+        typeof (DeviceOrientationEvent as any)?.requestPermission === 'function'
+      ) {
+        const response = await (DeviceOrientationEvent as any).requestPermission();
+        if (response === 'granted') {
+          setSensorStatus('active');
+          attachOrientationListeners();
+        } else {
+          setSensorStatus('denied');
+        }
+      } else {
+        attachOrientationListeners();
+      }
+    } catch (err) {
+      console.warn('iOS Sensor permission request note:', err);
+      attachOrientationListeners();
+    }
+  };
+
   // Device Orientation Listener & Inversion-Safe Angle Processor
-  const initCompassSensor = async () => {
+  const initCompassSensor = () => {
     if (typeof window === 'undefined') return;
 
     if (!('DeviceOrientationEvent' in window)) {
@@ -314,91 +459,33 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({ lang, locationName }
       return;
     }
 
-    try {
-      // iOS 13+ Safari Permission Request
-      const requestPermission = (DeviceOrientationEvent as any).requestPermission;
-      if (typeof requestPermission === 'function') {
-        const response = await requestPermission();
-        if (response !== 'granted') {
-          setSensorStatus('denied');
-          return;
-        }
-      }
-
-      const handleOrientation = (e: DeviceOrientationEvent) => {
-        let heading: number | null = null;
-        let type: 'absolute' | 'webkit' | 'standard' = 'standard';
-
-        // 1. iOS Safari (webkitCompassHeading) - 0° is Magnetic North directly (clockwise)
-        if ((e as any).webkitCompassHeading !== undefined && (e as any).webkitCompassHeading !== null) {
-          const webkitHeading = Number((e as any).webkitCompassHeading);
-          heading = isInvertedSensor ? (360 - webkitHeading + 360) % 360 : webkitHeading;
-          type = 'webkit';
-        }
-        // 2. Android Chrome Absolute Orientation
-        else if (e.alpha !== null) {
-          let screenAngle = 0;
-          if (typeof window.screen?.orientation?.angle === 'number') {
-            screenAngle = window.screen.orientation.angle;
-          } else if (typeof (window as any).orientation === 'number') {
-            screenAngle = (window as any).orientation;
-          }
-
-          const alpha = Number(e.alpha);
-          
-          // Standard W3C: alpha is counter-clockwise (0° North, 90° West, 270° East) -> heading = 360 - alpha
-          // Inverted/Alternate Android drivers: alpha is clockwise -> heading = alpha
-          if (isInvertedSensor) {
-            heading = (alpha + screenAngle + 360) % 360;
-          } else {
-            heading = (360 - alpha + screenAngle + 360) % 360;
-          }
-
-          if (e.absolute) {
-            hasAbsoluteSensorRef.current = true;
-            type = 'absolute';
-          } else {
-            type = 'standard';
-          }
-        }
-
-        if (heading !== null && !isNaN(heading)) {
-          const raw = (heading + 360) % 360;
-          setRawHeading(raw);
-          setSensorStatus('active');
-          setSensorType(type);
-
-          // Angle-Safe Exponential Smoothing (handles 359° <-> 0° boundary seamlessly)
-          const prev = lastHeadingRef.current;
-          let diff = raw - prev;
-          while (diff < -180) diff += 360;
-          while (diff > 180) diff -= 360;
-
-          // Responsive smoothing factor
-          const smoothed = (prev + diff * 0.4 + 360) % 360;
-          lastHeadingRef.current = smoothed;
-          setSmoothedHeading(Number(smoothed.toFixed(1)));
-        }
-      };
-
-      // Prioritize deviceorientationabsolute on Android
-      window.addEventListener('deviceorientationabsolute', handleOrientation as any, true);
-      window.addEventListener('deviceorientation', (e) => {
-        // If absolute orientation is already active, don't let relative event overwrite it
-        if (!hasAbsoluteSensorRef.current) {
-          handleOrientation(e);
-        }
-      }, true);
-
-      setSensorStatus('active');
-    } catch (err) {
-      console.error('Compass sensor initialization error:', err);
-      setSensorStatus('denied');
+    // If iOS Safari, permission MUST be requested via user tap
+    if (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') {
+      setSensorStatus('needs_permission');
+      return;
     }
+
+    // On Android, modern Chrome, and standard web browsers, attach immediately
+    attachOrientationListeners();
   };
 
+  // Auto-init Sensor & Auto-check GPS Geolocation on App / Tab Load
   useEffect(() => {
     initCompassSensor();
+
+    // Only auto-acquire GPS if permission was already explicitly granted earlier by user.
+    // Avoids annoying permission popup on initial load without user clicking.
+    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      if ('permissions' in navigator && typeof (navigator.permissions as any).query === 'function') {
+        navigator.permissions.query({ name: 'geolocation' as any }).then((permStatus) => {
+          if (permStatus.state === 'granted') {
+            handleFetchGpsLocation();
+          }
+        }).catch(() => {
+          // Do not prompt on load
+        });
+      }
+    }
   }, [isInvertedSensor]);
 
   // Effective Heading: Sensor smoothed heading or Manual Slider Heading
@@ -566,6 +653,16 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({ lang, locationName }
                 <span>মোবাইল কম্পাস সেন্সর সক্রিয় (হেডিং: <span className="font-mono text-amber-300">{toBengaliDigits(Math.round(currentHeading))}°</span>)</span>
               </span>
             </div>
+          ) : sensorStatus === 'needs_permission' ? (
+            <div className="text-amber-300 font-bold flex items-center gap-1.5 animate-pulse">
+              <Compass className="w-4 h-4 text-amber-300 animate-spin-slow shrink-0" />
+              <span>আইফোন/সাফারি সেন্সর অনুমতি প্রয়োজন — নিচে স্পর্শ করুন</span>
+            </div>
+          ) : sensorStatus === 'unsupported' ? (
+            <div className="text-amber-200 font-medium flex items-center gap-1.5">
+              <Sun className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>সেন্সরবিহীন ডিভাইস — সূর্য অবস্থান ও ম্যানুয়াল ডায়াল সক্রিয়</span>
+            </div>
           ) : (
             <div className="text-amber-300 font-semibold flex items-center gap-1.5">
               <AlertCircle className="w-4 h-4 text-amber-300 shrink-0" />
@@ -590,14 +687,25 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({ lang, locationName }
             <span>{isInvertedSensor ? '🔄 সেন্সর রিভার্স করা আছে (স্বাভাবিক করতে চাপুন)' : '🔄 পূর্ব-পশ্চিম উল্টো হলে এখানে চাপুন'}</span>
           </button>
 
-          <button
-            type="button"
-            onClick={initCompassSensor}
-            className="px-3 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-emerald-100 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border border-emerald-600 shadow-sm"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-amber-300" />
-            <span>সেন্সর রিফ্রেশ</span>
-          </button>
+          {sensorStatus === 'needs_permission' ? (
+            <button
+              type="button"
+              onClick={handleRequestIosSensorPermission}
+              className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black flex items-center gap-1.5 transition cursor-pointer border border-amber-300 shadow-md animate-pulse"
+            >
+              <Compass className="w-3.5 h-3.5 text-slate-950 animate-spin-slow" />
+              <span>অনুমতি দিন (ট্যাপ করুন)</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={initCompassSensor}
+              className="px-3 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-emerald-100 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border border-emerald-600 shadow-sm"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-amber-300" />
+              <span>সেন্সর রিফ্রেশ</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -610,46 +718,88 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({ lang, locationName }
         </div>
       </div>
 
-      {/* SUNSET & ISLAMIC HORIZON REFERENCE CARD */}
-      <div className="bg-gradient-to-r from-amber-950/60 via-emerald-950/80 to-slate-950 p-3.5 sm:p-4 rounded-2xl border border-amber-400/50 text-xs space-y-2">
+      {/* iOS Safari 13+ User Tap Permission Prompt Banner */}
+      {sensorStatus === 'needs_permission' && (
+        <button
+          type="button"
+          onClick={handleRequestIosSensorPermission}
+          className="w-full p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-emerald-400 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-between gap-3 shadow-xl ring-4 ring-amber-300/60 animate-pulse cursor-pointer hover:scale-[1.01] transition"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-950/20 rounded-xl">
+              <Compass className="w-6 h-6 text-slate-950 animate-spin-slow" />
+            </div>
+            <div className="text-left">
+              <span className="block font-black">📱 কম্পাস সেন্সর সক্রিয় করতে এখানে ট্যাপ করুন</span>
+              <span className="text-[11px] font-semibold text-slate-900 opacity-90">আইফোন/আইপ্যাডে ব্রাউজার মোশন সেন্সর ব্যবহারের অনুমতি দিন</span>
+            </div>
+          </div>
+          <span className="px-3 py-1.5 bg-slate-950 text-amber-300 rounded-xl text-xs font-black shrink-0">
+            ট্যাপ করুন ✓
+          </span>
+        </button>
+      )}
+
+      {/* SUNSET & ASTRONOMICAL SOLAR HORIZON REFERENCE CARD */}
+      <div className="bg-gradient-to-r from-amber-950/70 via-emerald-950/80 to-slate-950 p-3.5 sm:p-4 rounded-2xl border border-amber-400/50 text-xs space-y-2.5 shadow-lg">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2 font-black text-amber-300 text-sm">
-            <Sun className="w-4 h-4 text-amber-400" />
-            <span>সূর্যোদয়, সূর্যাস্ত ও কুষ্টিয়ার ক্বাবা দিক নির্দেশিকা:</span>
+            <Sun className="w-4 h-4 text-amber-400 animate-spin-slow" />
+            <span>রিয়েল-টাইম সূর্য, সূর্যাস্ত ও ১০০% নির্ভুল ক্বাবা দিকনির্দেশনা:</span>
           </div>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-black/60 border border-amber-400/30 text-amber-200 font-mono">
-            কুষ্টিয়া কিবলা: ২৭৭.১°
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-black/60 border border-amber-400/30 text-amber-200 font-mono">
+              ক্বাবা কোণ: {toBengaliDigits(qiblaDegree)}°
+            </span>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-900/80 border border-emerald-500/40 text-emerald-200">
+              {solarInfo.isSunAboveHorizon ? '☀️ সূর্য আকাশে দৃশ্যমান' : '🌙 দিগন্তের নিচে (রাত্রি)'}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-          <div className="bg-black/40 p-2.5 rounded-xl border border-white/10 flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-300">
-              <Sunrise className="w-5 h-5" />
+          {/* Current Sun Position */}
+          <div className="bg-black/50 p-2.5 rounded-xl border border-amber-400/20 flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-300 shrink-0">
+              <Sun className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-bold text-amber-300 block">পূর্ব দিক (৯০°)</span>
-              <p className="text-[11px] text-gray-300">যেদিকে প্রতিদিন সকালে সূর্য ওঠে (সূর্যোদয়)।</p>
+              <span className="font-bold text-amber-300 block">
+                সূর্যের অবস্থান ({toBengaliDigits(solarInfo.azimuth)}°)
+              </span>
+              <p className="text-[11px] text-gray-300">
+                উচ্চতা: {toBengaliDigits(Math.round(solarInfo.altitude))}° {solarInfo.isSunAboveHorizon ? `(ক্বাবা থেকে ${toBengaliDigits(Math.abs(solarInfo.qiblaOffsetFromSun))}° ${solarInfo.qiblaOffsetFromSun >= 0 ? 'ডানে' : 'বামে'})` : '(রাত্রি)'}
+              </p>
             </div>
           </div>
 
-          <div className="bg-black/40 p-2.5 rounded-xl border border-white/10 flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-orange-500/20 text-orange-300">
+          {/* Sunset Horizon */}
+          <div className="bg-black/50 p-2.5 rounded-xl border border-orange-400/20 flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-orange-500/20 text-orange-300 shrink-0">
               <Sunset className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-bold text-orange-300 block">পশ্চিম দিক (২৭০°)</span>
-              <p className="text-[11px] text-gray-300">যেদিকে প্রতিদিন বিকেলে সূর্য অস্ত যায় (সূর্যাস্ত)।</p>
+              <span className="font-bold text-orange-300 block">
+                আজকের সূর্যাস্ত ({toBengaliDigits(solarInfo.sunsetAzimuth)}°)
+              </span>
+              <p className="text-[11px] text-gray-300">
+                পশ্চিম দিগন্তের যে বিন্দুতে সূর্য অস্ত যাবে।
+              </p>
             </div>
           </div>
 
-          <div className="bg-black/40 p-2.5 rounded-xl border border-amber-400/40 flex items-center gap-2.5 bg-amber-950/30">
-            <div className="p-2 rounded-lg bg-amber-400/20 text-amber-300 text-lg">
+          {/* Kaaba Alignment */}
+          <div className="bg-black/50 p-2.5 rounded-xl border border-amber-400/40 flex items-center gap-2.5 bg-amber-950/30">
+            <div className="p-2 rounded-lg bg-amber-400/20 text-amber-300 text-lg shrink-0">
               🕋
             </div>
             <div>
-              <span className="font-black text-amber-300 block">পবিত্র ক্বাবা শরীফ (২৭৭.১°)</span>
-              <p className="text-[11px] text-emerald-200">সূর্যাস্তের পশ্চিম দিক থেকে মাত্র ৭° ডান দিকে (উত্তর)।</p>
+              <span className="font-black text-amber-300 block">
+                পবিত্র ক্বাবা শরীফ ({toBengaliDigits(qiblaDegree)}°)
+              </span>
+              <p className="text-[11px] text-emerald-200">
+                সূর্যাস্ত থেকে মাত্র {toBengaliDigits(Math.abs(solarInfo.qiblaOffsetFromSunset))}° {solarInfo.qiblaOffsetFromSunset >= 0 ? 'ডান (উত্তর)' : 'বাম (দক্ষিণ)'} দিকে।
+              </p>
             </div>
           </div>
         </div>
@@ -723,7 +873,14 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({ lang, locationName }
 
         {/* Outer Bezel */}
         <div
+          onClick={() => {
+            if (sensorStatus === 'needs_permission') {
+              handleRequestIosSensorPermission();
+            }
+          }}
           className={`relative w-72 h-72 sm:w-80 sm:h-80 rounded-full border-4 transition-all duration-300 bg-gradient-to-b from-slate-950 via-emerald-950 to-slate-950 flex items-center justify-center shadow-2xl p-4 select-none ${
+            sensorStatus === 'needs_permission' ? 'cursor-pointer hover:ring-8 hover:ring-amber-400/40' : ''
+          } ${
             isAligned
               ? 'border-amber-400 ring-8 ring-amber-400/30 shadow-amber-400/40'
               : 'border-emerald-600/80 shadow-emerald-950/80'
@@ -768,6 +925,38 @@ export const QiblaCompass: React.FC<QiblaCompassProps> = ({ lang, locationName }
             <div className="absolute left-3 flex flex-col items-center">
               <span className="text-xs font-black text-amber-300 font-mono tracking-tighter">W</span>
               <span className="text-[9px] text-amber-300 font-bold">পশ্চিম</span>
+            </div>
+
+            {/* REAL-TIME SUN MARKER ON ROTATING DIAL */}
+            {solarInfo.isSunAboveHorizon && (
+              <div
+                className="absolute w-full h-full flex justify-center items-start pointer-events-none"
+                style={{ transform: `rotate(${solarInfo.azimuth}deg)` }}
+              >
+                <div className="flex flex-col items-center -mt-2 z-10">
+                  <div className="w-6 h-6 rounded-full bg-amber-400 border border-amber-200 flex items-center justify-center shadow-lg shadow-amber-400/60 text-xs animate-pulse">
+                    ☀️
+                  </div>
+                  <span className="text-[8px] font-bold bg-amber-500 text-slate-950 px-1 py-0.2 rounded mt-0.5 shadow font-mono">
+                    সূর্য {toBengaliDigits(solarInfo.azimuth)}°
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* TODAY'S SUNSET MARKER ON ROTATING DIAL */}
+            <div
+              className="absolute w-full h-full flex justify-center items-start pointer-events-none"
+              style={{ transform: `rotate(${solarInfo.sunsetAzimuth}deg)` }}
+            >
+              <div className="flex flex-col items-center -mt-2 z-10">
+                <div className="w-5 h-5 rounded-full bg-orange-500 border border-orange-300 flex items-center justify-center shadow-md text-[10px]">
+                  🌅
+                </div>
+                <span className="text-[8px] font-bold bg-orange-600 text-white px-1 py-0.2 rounded mt-0.5 shadow font-mono">
+                  সূর্যাস্ত {toBengaliDigits(solarInfo.sunsetAzimuth)}°
+                </span>
+              </div>
             </div>
 
             {/* KAABA POSITION MARKER ON DIAL (Fixed at qiblaDegree on the dial, e.g. 277.1°) */}

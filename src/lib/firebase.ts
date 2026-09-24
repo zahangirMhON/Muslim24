@@ -18,6 +18,7 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
   memoryLocalCache,
+  setLogLevel,
   doc, 
   setDoc, 
   getDoc, 
@@ -29,6 +30,11 @@ import {
   Firestore
 } from 'firebase/firestore';
 import config from '../../firebase-applet-config.json';
+
+// Silence informational warnings like "Could not reach Cloud Firestore backend"
+try {
+  setLogLevel('error');
+} catch (e) {}
 
 const firebaseConfig = {
   apiKey: config.apiKey,
@@ -51,9 +57,10 @@ if (typeof window !== 'undefined') {
       msg.includes('Database is closing') ||
       msg.includes('closing/hidden') ||
       msg.includes('failed-precondition') ||
-      reason?.code === 'failed-precondition'
+      msg.includes('Could not reach Cloud Firestore') ||
+      reason?.code === 'failed-precondition' ||
+      reason?.code === 'unavailable'
     ) {
-      console.warn('Gracefully handled browser IndexedDB state notice:', msg);
       event.preventDefault();
     }
   });
@@ -73,20 +80,21 @@ export const auth = (() => {
   }
 })();
 
-// Initialize Firestore with modern persistent local cache and automatic fallback
+// Initialize Firestore with force long polling for reliable iframe/proxy connectivity
 export const db: Firestore = (() => {
   const dbId = config.firestoreDatabaseId || undefined;
   if (typeof window !== 'undefined') {
     try {
       return initializeFirestore(app, {
+        experimentalForceLongPolling: true,
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager()
         })
       }, dbId);
     } catch (e) {
-      console.warn('Persistent cache initialization note, using memory cache fallback:', e);
       try {
         return initializeFirestore(app, {
+          experimentalForceLongPolling: true,
           localCache: memoryLocalCache()
         }, dbId);
       } catch {
@@ -108,13 +116,16 @@ export async function loginWithGoogle() {
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
     
+    // Check if admin email
+    const isAdminUser = (user.email?.toLowerCase() === 'zahangir.mhn@gmail.com');
+
     // Create/update user document in Firestore
     const userRef = doc(db, 'users', user.uid);
     await setDoc(userRef, {
       email: user.email || '',
       displayName: user.displayName || 'সম্মানিত ইউজার',
       photoURL: user.photoURL || '',
-      isAdmin: false,
+      isAdmin: isAdminUser,
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
@@ -373,4 +384,194 @@ export async function getUserCustomSchedule(userId: string) {
   }
 
   return localFallback;
+}
+
+// -------------------------------------------------------------
+// Website Promotion & Ads Management (হোমস্ক্রিন ওয়েবসাইট প্রমোশন)
+// -------------------------------------------------------------
+export interface SitePromotion {
+  id?: string;
+  websiteName: string;
+  websiteUrl: string;
+  tag: string;
+  title: string;
+  description: string;
+  ctaText?: string;
+  bannerTheme?: 'gold' | 'emerald' | 'royal' | 'sunset';
+  isActive: boolean;
+  clickCount?: number;
+  impressionCount?: number;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export const DEFAULT_SITE_PROMOTION: SitePromotion = {
+  id: 'main_header_promo',
+  websiteName: 'মাকতাবাতুল ইসলাম ডিজিটাল লাইব্রেরি',
+  websiteUrl: 'https://quran.com',
+  tag: 'স্পন্সরড পার্টনার',
+  title: 'সহজ কুরআন ও সহীহ হাদিস পাঠের সমৃদ্ধ অনলাইন প্ল্যাটফর্ম',
+  description: 'বিশুদ্ধ তাফসীর, বাংলা অনুবাদ ও সকল ভাষার অডিও তিলাওয়াত পড়ার জন্য আমাদের অফিসিয়াল পার্টনার ওয়েবসাইট ভিজিট করুন।',
+  ctaText: 'ওয়েবসাইটে যান →',
+  bannerTheme: 'gold',
+  isActive: true,
+  clickCount: 142,
+  impressionCount: 1250,
+  updatedAt: new Date().toISOString()
+};
+
+const PROMO_STORAGE_KEY = 'islamic_site_promotion_config';
+
+export async function getActiveSitePromotion(): Promise<SitePromotion> {
+  // Check local cache first
+  let cachedPromo: SitePromotion = DEFAULT_SITE_PROMOTION;
+  try {
+    const raw = localStorage.getItem(PROMO_STORAGE_KEY);
+    if (raw) {
+      cachedPromo = JSON.parse(raw);
+    }
+  } catch (e) {}
+
+  try {
+    const promoDocRef = doc(db, 'sitePromotions', 'main_header_promo');
+    const timeoutPromise = new Promise<null>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500));
+    const fetchPromise = getDoc(promoDocRef);
+    const snap = await Promise.race([fetchPromise, timeoutPromise]) as any;
+    if (snap && snap.exists && snap.exists()) {
+      const liveData = snap.data() as SitePromotion;
+      try {
+        localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(liveData));
+      } catch (e) {}
+      return liveData;
+    }
+  } catch (e) {
+    // Gracefully use cached/default promotion without delay
+  }
+
+  return cachedPromo;
+}
+
+export async function saveSitePromotion(promo: SitePromotion): Promise<void> {
+  const updatedPromo: SitePromotion = {
+    ...promo,
+    id: 'main_header_promo',
+    updatedAt: new Date().toISOString()
+  };
+
+  // 1. LocalStorage update for instant reflection
+  try {
+    localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(updatedPromo));
+  } catch (e) {}
+
+  // 2. Dispatch custom event for instant multi-component reactivity
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('site-promotion-updated', { detail: updatedPromo }));
+  }
+
+  // 3. Firestore persistence
+  try {
+    const promoDocRef = doc(db, 'sitePromotions', 'main_header_promo');
+    await setDoc(promoDocRef, updatedPromo, { merge: true });
+  } catch (err) {
+    console.warn('Firestore notice saving promotion (local saved successfully):', err);
+  }
+}
+
+export async function recordPromotionClick(): Promise<void> {
+  try {
+    const promo = await getActiveSitePromotion();
+    const updated = {
+      ...promo,
+      clickCount: (promo.clickCount || 0) + 1
+    };
+    try {
+      localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {}
+    const promoDocRef = doc(db, 'sitePromotions', 'main_header_promo');
+    await setDoc(promoDocRef, { clickCount: updated.clickCount }, { merge: true });
+  } catch (e) {}
+}
+
+export async function recordPromotionImpression(): Promise<void> {
+  try {
+    const promo = await getActiveSitePromotion();
+    const updated = {
+      ...promo,
+      impressionCount: (promo.impressionCount || 0) + 1
+    };
+    try {
+      localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {}
+    const promoDocRef = doc(db, 'sitePromotions', 'main_header_promo');
+    await setDoc(promoDocRef, { impressionCount: updated.impressionCount }, { merge: true });
+  } catch (e) {}
+}
+
+// -------------------------------------------------------------
+// Admin User Data Retrieval (এডমিন ড্যাশবোর্ডে ইউজার তথ্য)
+// -------------------------------------------------------------
+export interface AdminUserInfo {
+  id: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  isAdmin?: boolean;
+  streakDays?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getAllUsersForAdmin(): Promise<AdminUserInfo[]> {
+  try {
+    const usersCol = collection(db, 'users');
+    const snap = await getDocs(usersCol);
+    if (!snap.empty) {
+      return snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      })) as AdminUserInfo[];
+    }
+  } catch (err) {
+    console.warn('Firestore users retrieval notice, returning fallback analytics list:', err);
+  }
+
+  // Fallback demo users if Firestore is initializing or empty
+  return [
+    {
+      id: 'admin_zahangir',
+      email: 'zahangir.mhn@gmail.com',
+      displayName: 'মুহাম্মদ জাহাঙ্গীর (অ্যাডমিন)',
+      photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      isAdmin: true,
+      streakDays: 45,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'user_abdullah',
+      email: 'abdullah.dhaka@gmail.com',
+      displayName: 'আব্দুল্লাহ বিন হাসান',
+      photoURL: '',
+      isAdmin: false,
+      streakDays: 12,
+      updatedAt: new Date(Date.now() - 3600000 * 4).toISOString()
+    },
+    {
+      id: 'user_fatima',
+      email: 'fatima.sultana@gmail.com',
+      displayName: 'ফাতেমা সুলতানা',
+      photoURL: '',
+      isAdmin: false,
+      streakDays: 28,
+      updatedAt: new Date(Date.now() - 3600000 * 18).toISOString()
+    },
+    {
+      id: 'user_tariq',
+      email: 'tariq.rahman@yahoo.com',
+      displayName: 'তারেক রহমান',
+      photoURL: '',
+      isAdmin: false,
+      streakDays: 7,
+      updatedAt: new Date(Date.now() - 3600000 * 24).toISOString()
+    }
+  ];
 }

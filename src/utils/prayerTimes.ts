@@ -271,6 +271,7 @@ export interface DetailedPrayerState {
     themeNameBn: string;
     progressGradient: string;
     skyIcon: string;
+    bgStyle?: string;
   };
 }
 

@@ -265,11 +265,13 @@ export class MediaEngineService {
 
   private loadPersistedSchedule(): MediaScheduleItem[] {
     try {
-      const saved = localStorage.getItem('islamic_custom_audio_schedule');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('islamic_custom_audio_schedule');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
         }
       }
     } catch (e) {
@@ -280,7 +282,9 @@ export class MediaEngineService {
 
   private saveSchedule() {
     try {
-      localStorage.setItem('islamic_custom_audio_schedule', JSON.stringify(this.schedule));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('islamic_custom_audio_schedule', JSON.stringify(this.schedule));
+      }
     } catch (e) {
       console.log('Error saving custom audio schedule:', e);
     }

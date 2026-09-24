@@ -275,18 +275,17 @@ export const QuickDuaModal: React.FC<QuickDuaModalProps> = ({
           </div>
         </div>
 
-        {/* Search & Filter Section */}
-        <div className="px-4 sm:px-6 py-3 bg-slate-900/80 border-b border-emerald-900/40 space-y-2.5 shrink-0">
-          {/* Live Search Input */}
+        {/* Slim Search Input Header */}
+        <div className="px-4 sm:px-6 py-2.5 bg-slate-900/90 border-b border-emerald-900/40 shrink-0">
           <div className="relative">
-            <Search className="w-5 h-5 text-emerald-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-emerald-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="পরিস্থিতি বা প্রয়োজন দিয়ে খুঁজুন (যেমন: খাবার, ঘুম, গাড়ি, ওজু, বৃষ্টি, রাগ, ঋণ, পড়ালেখা, রোগ...)"
-              className="w-full pl-11 pr-10 py-2.5 bg-emerald-950/70 border border-emerald-600/50 rounded-2xl text-emerald-100 placeholder-emerald-400/50 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/70 focus:border-amber-400 transition"
+              className="w-full pl-10 pr-10 py-2 bg-emerald-950/70 border border-emerald-600/50 rounded-xl text-emerald-100 placeholder-emerald-400/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/70 focus:border-amber-400 transition"
             />
             {searchQuery && (
               <button
@@ -297,9 +296,13 @@ export const QuickDuaModal: React.FC<QuickDuaModalProps> = ({
               </button>
             )}
           </div>
+        </div>
 
-          {/* Quick Context Suggestion Tags */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-emerald-700">
+        {/* Modal Body: Scrollable Categories, Chips & Dua Cards List */}
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-3.5 custom-scrollbar overscroll-contain touch-pan-y">
+          
+          {/* Quick Context Suggestion Tags inside scrollable area */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             <span className="text-[11px] font-bold text-amber-300/80 shrink-0 flex items-center gap-1 mr-1">
               <Filter className="w-3 h-3" /> দ্রুত ফিল্টার:
             </span>
@@ -321,8 +324,8 @@ export const QuickDuaModal: React.FC<QuickDuaModalProps> = ({
             ))}
           </div>
 
-          {/* Context Category Chips Bar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-emerald-700">
+          {/* Context Category Chips Bar inside scrollable area */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {QUICK_DUA_CATEGORIES.map(cat => {
               const isActive = selectedCategory === cat.id;
               return (
@@ -344,10 +347,6 @@ export const QuickDuaModal: React.FC<QuickDuaModalProps> = ({
               );
             })}
           </div>
-        </div>
-
-        {/* Modal Body: Scrollable Dua Cards List */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 scrollbar-thin scrollbar-thumb-emerald-700">
           {/* Search/Filter Summary Info */}
           <div className="flex items-center justify-between text-xs text-emerald-300/80 px-1">
             <span className="font-medium">

@@ -2,23 +2,37 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'zahangir.mhn@gmail.com' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+      );
+    }
+
     // User profile document rules
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
     }
     
     // User activity logs and progress check marks
     match /userActivities/{activityId} {
-      allow read: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid);
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // User customized 24/7 radio schedule and playlist items
     match /userSchedules/{scheduleId} {
-      allow read: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid);
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Site promotions and ads banner
+    match /sitePromotions/{promoId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
     // Fallback default deny

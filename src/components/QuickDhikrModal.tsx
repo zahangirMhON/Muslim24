@@ -137,7 +137,7 @@ export const QuickDhikrModal: React.FC<QuickDhikrModalProps> = ({ isOpen, onClos
       onClick={onClose}
     >
       <div
-        className="bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 border-2 border-amber-400/70 rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-4 text-emerald-50 relative overflow-hidden"
+        className="bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 border-2 border-amber-400/70 rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-4 text-emerald-50 relative max-h-[92vh] overflow-y-auto custom-scrollbar touch-pan-y"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}

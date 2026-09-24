@@ -53,6 +53,9 @@ import { LockscreenTestOverlay } from './components/LockscreenTestOverlay';
 import { CareRoutineOperatingSystem } from './components/CareRoutineOperatingSystem';
 import { CareReportShareView } from './components/CareReportShareView';
 import { AlarmRingingOverlay } from './components/AlarmRingingOverlay';
+import { WebsitePromotionBanner } from './components/WebsitePromotionBanner';
+import { HijriYearSpecialDaysCountdown } from './components/HijriYearSpecialDaysCountdown';
+import { InteractiveKeywordKnowledgeModal } from './components/InteractiveKeywordKnowledgeModal';
 import { Footer } from './components/Footer';
 
 export default function App() {
@@ -103,11 +106,26 @@ export default function App() {
       setIsQuickDuaOpen(true);
     };
 
+    const handleSwitchMainTab = (e: Event) => {
+      const customEvent = e as CustomEvent<{ tab: string; elementId?: string }>;
+      if (customEvent.detail?.tab) {
+        setActiveTab(customEvent.detail.tab as any);
+        if (customEvent.detail.elementId) {
+          setTimeout(() => {
+            const el = document.getElementById(customEvent.detail.elementId!);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 150);
+        }
+      }
+    };
+
     window.addEventListener('open-user-profile-tab', handleOpenProfileTab);
     window.addEventListener('open-quick-dua-modal', handleOpenQuickDua);
+    window.addEventListener('switch-main-tab', handleSwitchMainTab);
     return () => {
       window.removeEventListener('open-user-profile-tab', handleOpenProfileTab);
       window.removeEventListener('open-quick-dua-modal', handleOpenQuickDua);
+      window.removeEventListener('switch-main-tab', handleSwitchMainTab);
     };
   }, []);
 
@@ -393,7 +411,7 @@ export default function App() {
             }`}
           >
             <ShieldCheck className="w-4 h-4 text-amber-300" />
-            <span>RAG মডারেশন ও আলেম পোর্টাল</span>
+            <span>এডমিন প্যানেল ও প্রমোশন কন্ট্রোল</span>
           </motion.button>
         </nav>
 
@@ -408,6 +426,12 @@ export default function App() {
               transition={{ duration: 0.22, ease: "easeOut" }}
               className="space-y-6"
             >
+              {/* 0. Top Website Promotion Banner (হোমস্ক্রিন শীর্ষ ওয়েবসাইট প্রমোশন) */}
+              <WebsitePromotionBanner 
+                onOpenAdmin={() => setActiveTab('admin')} 
+                isAdmin={true} 
+              />
+
               {/* Quick Teaser to Care OS inside Media */}
               <motion.div
                 whileHover={{ scale: 1.01 }}
@@ -440,41 +464,64 @@ export default function App() {
               </motion.div>
               
               {/* 1. Triple Calendar Card (বর্ষপঞ্জিকা) */}
-              <CalendarCard dates={calendarDates} lang={lang} />
+              <div id="calendar-card-section">
+                <CalendarCard dates={calendarDates} lang={lang} />
+              </div>
+
+              {/* 1.1 Islamic Hijri Year Special Days & Advance New Year Countdown */}
+              <div id="hijri-countdown-section">
+                <HijriYearSpecialDaysCountdown />
+              </div>
 
               {/* 2. Prayer Times Card (৫ ওয়াক্ত ফরয, নফল ও সূর্যোদয়/সূর্যাস্ত সেকশন) */}
-              <PrayerCard
-                schedule={prayerSchedule}
-                lang={lang}
-                locationName={`${selectedLocation.districtBn}`}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-              />
+              <div id="prayer-card-section">
+                <PrayerCard
+                  schedule={prayerSchedule}
+                  lang={lang}
+                  locationName={`${selectedLocation.districtBn}`}
+                  onOpenSettings={() => setIsSettingsOpen(true)}
+                />
+              </div>
 
               {/* 3. Unified Dhikr, Daily Duas & Asmaul Husna (দোয়া, জিকির ও ৯৯ নাম) */}
-              <TasbihCard lang={lang} onPlayAudio={handlePlayAudio} />
+              <div id="tasbih-card-section">
+                <TasbihCard lang={lang} onPlayAudio={handlePlayAudio} />
+              </div>
 
               {/* 4. 24/7 Live Broadcast & Media Radio (সরাসরি সম্প্রচার) */}
-              <MediaEngineTab lang={lang} audioMode={audioMode} onToggleAudioMode={setAudioMode} />
+              <div id="media-card-section">
+                <MediaEngineTab lang={lang} audioMode={audioMode} onToggleAudioMode={setAudioMode} />
+              </div>
 
               {/* 5. Islamic Life & AI Chat Guidance (ইসলামিক জীবন নির্দেশিকা) */}
-              <IslamicAiChat lang={lang} />
+              <div id="ai-chat-section">
+                <IslamicAiChat lang={lang} />
+              </div>
 
               {/* 6. Quran 10 Ayats/day Goal (দৈনিক ১০টি কুরআনের আয়াত) */}
-              <QuranGoalCard
-                lang={lang}
-                onPlayAudio={handlePlayAudio}
-                currentlyPlayingUrl={activeAudioUrl}
-                isPlaying={isPlayingAudio}
-              />
+              <div id="quran-goal-section">
+                <QuranGoalCard
+                  lang={lang}
+                  onPlayAudio={handlePlayAudio}
+                  currentlyPlayingUrl={activeAudioUrl}
+                  isPlaying={isPlayingAudio}
+                />
+              </div>
 
               {/* 7. Daily Arabic Language Learning (প্রতিদিন সহজ আরবি ভাষা শিক্ষা) */}
-              <ArabicLearningCard lang={lang} />
+              <div id="arabic-learning-section">
+                <ArabicLearningCard lang={lang} />
+              </div>
 
               {/* 8. Islamic Quiz Section (দিন অনুযায়ী পরিবর্তনশীল কুইজ) */}
-              <QuizSection lang={lang} />
+              <div id="quiz-section">
+                <QuizSection lang={lang} />
+              </div>
 
               {/* 9. Community Amal Progress & Leaderboard Overview (সকলের অগ্রগতি ও পারফরম্যান্স ওভারভিউ) */}
-              <CommunityAmalLeaderboard onOpenUserProfile={() => setIsUserProfileOpen(true)} />
+              <div id="leaderboard-section">
+                <CommunityAmalLeaderboard onOpenUserProfile={() => setIsUserProfileOpen(true)} />
+              </div>
             </motion.div>
           )}
 
@@ -710,6 +757,19 @@ export default function App() {
           onToggleAudioMode={setAudioMode}
         />
       )}
+
+      {/* Interactive Keyword Knowledge Modal (১ ক্লিকে শব্দের গভীর জ্ঞান, কেন ও কীভাবে এবং অনুপ্রেরণা) */}
+      <InteractiveKeywordKnowledgeModal
+        onNavigateTab={(tab, elementId) => {
+          setActiveTab(tab as any);
+          if (elementId) {
+            setTimeout(() => {
+              const el = document.getElementById(elementId);
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 150);
+          }
+        }}
+      />
 
       {/* Footer */}
       <Footer lang={lang} />

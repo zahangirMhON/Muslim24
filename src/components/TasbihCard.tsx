@@ -1018,43 +1018,71 @@ export const TasbihCard: React.FC<TasbihCardProps> = ({ lang, onPlayAudio }) => 
                 })}
               </div>
 
-              {/* Controls: BIG VIBRATING TAP Button & Reset */}
-              <div className="flex items-center gap-5 mt-4">
-                <motion.button
-                  whileHover={{ scale: 1.06 }}
-                  whileTap={{ scale: 0.88 }}
-                  transition={{ type: 'spring', stiffness: 450, damping: 15 }}
-                  type="button"
-                  onClick={handleIncrement}
-                  onTouchStart={() => {
-                    initAudioContext();
-                    if ('vibrate' in navigator && vibrationEnabled) {
-                      try {
-                        navigator.vibrate(40);
-                      } catch {}
-                    }
-                  }}
-                  className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-300 text-emerald-950 font-black text-xl shadow-2xl flex flex-col items-center justify-center border-4 border-amber-200/90 cursor-pointer select-none"
-                  aria-label="তাসবিহ কাউন্ট করুন"
-                >
-                  <span className="text-3xl sm:text-4xl">📿</span>
-                  <span className="text-[11px] font-black uppercase tracking-wider mt-0.5">ট্যাপ করুন</span>
-                  {vibrationEnabled && (
-                    <span className="text-[9px] font-bold text-emerald-950/80">📳 ভাইব্রেশন</span>
-                  )}
-                </motion.button>
+              {/* Controls: BIG VIBRATING TAP Button, Start, Stop & Reset */}
+              <div className="flex flex-col items-center gap-3 mt-4">
+                
+                {/* Big Main Tap Button & Reset */}
+                <div className="flex items-center gap-5">
+                  <motion.button
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ scale: 0.88 }}
+                    transition={{ type: 'spring', stiffness: 450, damping: 15 }}
+                    type="button"
+                    onClick={handleIncrement}
+                    onTouchStart={() => {
+                      initAudioContext();
+                      if ('vibrate' in navigator && vibrationEnabled) {
+                        try {
+                          navigator.vibrate(40);
+                        } catch {}
+                      }
+                    }}
+                    className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-300 text-emerald-950 font-black text-xl shadow-2xl flex flex-col items-center justify-center border-4 border-amber-200/90 cursor-pointer select-none"
+                    aria-label="তাসবিহ কাউন্ট করুন"
+                  >
+                    <span className="text-3xl sm:text-4xl">📿</span>
+                    <span className="text-[11px] font-black uppercase tracking-wider mt-0.5">ট্যাপ করুন</span>
+                    {vibrationEnabled && (
+                      <span className="text-[9px] font-bold text-emerald-950/80">📳 ভাইব্রেশন</span>
+                    )}
+                  </motion.button>
 
-                <motion.button
-                  whileHover={{ scale: 1.06 }}
-                  whileTap={{ rotate: -45, scale: 0.92 }}
-                  transition={{ duration: 0.15 }}
-                  onClick={handleReset}
-                  className="p-4 rounded-2xl bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/60 transition flex flex-col items-center gap-1 shadow-md cursor-pointer"
-                  title={t.reset}
-                >
-                  <RotateCcw className="w-5 h-5 text-amber-300" />
-                  <span className="text-[10px] font-bold">{t.reset}</span>
-                </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ rotate: -45, scale: 0.92 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={handleReset}
+                    className="p-4 rounded-2xl bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/60 transition flex flex-col items-center gap-1 shadow-md cursor-pointer"
+                    title={t.reset}
+                  >
+                    <RotateCcw className="w-5 h-5 text-amber-300" />
+                    <span className="text-[10px] font-bold">{t.reset}</span>
+                  </motion.button>
+                </div>
+
+                {/* Explicit Start (শুরু করুন) & Stop (বন্ধ করুন) Action Buttons */}
+                <div className="flex items-center justify-center gap-2.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleIncrement}
+                    className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-1.5 transition shadow-lg cursor-pointer active:scale-95"
+                    title="তাসবিহ গণনা শুরু বা এগিয়ে নিন"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>শুরু করুন</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="px-4 py-2 rounded-xl bg-emerald-900 hover:bg-rose-900/80 text-emerald-200 hover:text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 transition shadow border border-emerald-700/60 cursor-pointer active:scale-95"
+                    title="গণনা থামান বা রিসেট করুন"
+                  >
+                    <Square className="w-3.5 h-3.5 fill-current" />
+                    <span>বন্ধ করুন</span>
+                  </button>
+                </div>
+
               </div>
             </div>
 

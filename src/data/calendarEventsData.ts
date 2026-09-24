@@ -1,6 +1,8 @@
 // Comprehensive Multi-Calendar Data Engine (Hijri, Bengali, Gregorian)
 // Strictly grounded in Quran and Sahih Sunnah with Islamic Scholars, Sahaba & Prophetic History
 
+import { toBengaliOrdinal } from '../utils/bengaliUtils';
+
 export interface CalendarDayDetails {
   dateKey: string; // YYYY-MM-DD
   gregorianDateStr: string;
@@ -503,9 +505,9 @@ export function getDetailedCalendarDayInfo(date: Date = new Date()): CalendarDay
   const bengaliNumerals = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
   const toBn = (n: number | string) => String(n).replace(/[0-9]/g, d => bengaliNumerals[parseInt(d, 10)]);
 
-  const gregorianDateStr = `${toBn(day)} ${GREG_MONTH_NAMES[month]} ${toBn(year)}, ${DAY_NAMES[dayOfWeek]}`;
-  const hijriDateStr = `${toBn(hijriDay)} ${HIJRI_NAMES[hijriMonth]} ${toBn(hijriYear)} হিজরি`;
-  const bengaliDateStr = `${toBn(bengaliDay)} ${BANGLA_MONTH_NAMES[bengaliMonth]} ${toBn(bengaliYear)} বঙ্গাব্দ`;
+  const gregorianDateStr = `${toBn(day)} ${GREG_MONTH_NAMES[month]}(${toBn(month + 1)}) ${toBn(year)}, ${DAY_NAMES[dayOfWeek]}`;
+  const hijriDateStr = `${toBn(hijriDay)} ${HIJRI_NAMES[hijriMonth]}(${toBn(hijriMonth + 1)}) ${toBn(hijriYear)} হিজরি`;
+  const bengaliDateStr = `${toBn(bengaliDay)} ${BANGLA_MONTH_NAMES[bengaliMonth]}(${toBn(bengaliMonth + 1)}) ${toBn(bengaliYear)} বঙ্গাব্দ`;
 
   const isFriday = dayOfWeek === 5;
   const isMondayOrThursday = dayOfWeek === 1 || dayOfWeek === 4;

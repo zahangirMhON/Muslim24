@@ -13,6 +13,8 @@ import {
   X,
   Home,
   BookOpen,
+  Calendar,
+  Layers,
   Clock,
   HeartHandshake,
   Bot,
@@ -178,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'ai', title: 'ইসলামিক এআই ফতোয়া ও জ্ঞান', icon: <Bot className="w-4 h-4 text-teal-300" />, desc: 'কুরআন ও সহীহ হাদিস ভিত্তিক তাৎক্ষণিক উত্তর' },
     { id: 'focus', title: 'ইসলামিক ফোকাস ড্যাশবোর্ড', icon: <Sparkles className="w-4 h-4 text-amber-400" />, desc: 'আমল ট্র্যাকার, সালাত রুটিন ও কুরআন রিডিং গোল' },
     { id: 'quiz', title: 'ইসলামিক কুইজ', icon: <HelpCircle className="w-4 h-4 text-indigo-400" />, desc: 'প্রতিদিন পরিবর্তনশীল ইসলামিক জ্ঞান প্রতিযোগিতা' },
-    { id: 'admin', title: 'RAG মডারেশন ও আলেম পোর্টাল', icon: <ShieldCheck className="w-4 h-4 text-amber-300" />, desc: 'সহীহ রেফারেন্স ও নলেজবেস ম্যানেজমেন্ট' },
+    { id: 'admin', title: 'এডমিন প্যানেল ও ওয়েবসাইট প্রমোশন', icon: <ShieldCheck className="w-4 h-4 text-amber-300" />, desc: 'হোম ব্যানার অ্যাডস, ইউজার ডেটা ও আলেম পোর্টাল' },
   ];
 
   const isHeaderHidden = isScrolled && scrollDirection === 'down' && !isCompactExpanded;
@@ -259,6 +261,16 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Quick Menu & Action Controls */}
             <div className="flex items-center gap-1 sm:gap-2 text-xs">
               
+              {/* Sections Category Window Launcher Button */}
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('open-sections-category-window'))}
+                className="px-2 sm:px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs flex items-center gap-1 sm:gap-1.5 shadow cursor-pointer transition border border-amber-300"
+                title="ওয়েবপেজের ছোট ছোট সেকশনগুলোর আলাদা উইন্ডো ক্যাটাগরি তালিকা খুলুন"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">সেকশন হাব</span>
+              </button>
+
               {/* Section Quick Jump Navigator Button */}
               <div className="relative">
                 <button
@@ -291,20 +303,62 @@ export const Header: React.FC<HeaderProps> = ({
                       </button>
                     </div>
 
-                    <div className="p-2 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 border-b border-emerald-800/80">
+                    <div className="p-2 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 border-b border-emerald-800/80 space-y-2">
+                      <button
+                        onClick={() => {
+                          setIsSectionMenuOpen(false);
+                          window.dispatchEvent(new CustomEvent('open-sections-category-window'));
+                        }}
+                        className="w-full p-2.5 rounded-xl bg-gradient-to-r from-emerald-900 to-teal-900 hover:bg-emerald-850 border border-amber-400/70 text-white font-bold shadow-md flex items-center gap-2.5 cursor-pointer text-left"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 font-black">
+                          <Layers className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-black text-amber-300 flex items-center gap-1">
+                            <span>সেকশন ক্যাটাগরি উইন্ডো</span>
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 font-black">সব সেকশন</span>
+                          </div>
+                          <div className="text-[10px] text-emerald-200">সকল ছোট সেকশনের ক্যাটাগরি তালিকা ও লঞ্চার</div>
+                        </div>
+                      </button>
+
                       <button
                         onClick={() => {
                           setIsSectionMenuOpen(false);
                           window.dispatchEvent(new CustomEvent('open-quick-dua-modal'));
                         }}
-                        className="w-full p-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-emerald-950 font-black shadow-md flex items-center gap-2.5 cursor-pointer text-left"
+                        className="w-full p-2 rounded-xl bg-black/40 hover:bg-emerald-900/60 border border-emerald-700/80 text-white font-semibold flex items-center gap-2.5 cursor-pointer text-left"
                       >
-                        <div className="w-7 h-7 rounded-lg bg-emerald-950 text-amber-300 flex items-center justify-center shrink-0">
-                          <Sparkles className="w-4 h-4 animate-pulse" />
+                        <div className="w-6 h-6 rounded-lg bg-emerald-950 text-amber-300 border border-amber-400/40 flex items-center justify-center shrink-0">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                         </div>
                         <div>
-                          <div className="text-xs font-black">তাত্ক্ষণিক দোয়া ও আমল (Quick Dua)</div>
-                          <div className="text-[10px] text-emerald-950 font-semibold">খাবার, ঘুম, সফর, রোগ ও সকল জরুরি দোয়া</div>
+                          <div className="text-xs font-bold text-amber-200">তাত্ক্ষণিক দোয়া ও আমল (Quick Dua)</div>
+                          <div className="text-[10px] text-gray-300">খাবার, ঘুম, সফর, রোগ ও সকল জরুরি দোয়া</div>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setIsSectionMenuOpen(false);
+                          handleSelectSection('home');
+                          setTimeout(() => {
+                            const el = document.getElementById('hijri-countdown-section');
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }, 150);
+                        }}
+                        className="w-full p-2 rounded-xl bg-black/40 hover:bg-emerald-900/60 border border-emerald-700/80 text-white font-semibold flex items-center gap-2.5 cursor-pointer text-left"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center justify-center shrink-0">
+                          <Calendar className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                            <span>হিজরি বর্ষ ও বিশেষ দিন কাউন্টার</span>
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 font-black">১ বছর</span>
+                          </div>
+                          <div className="text-[10px] text-gray-300">কত দিন বাকি ও নতুন বছর প্রস্তুতির বার্তা</div>
                         </div>
                       </button>
                     </div>

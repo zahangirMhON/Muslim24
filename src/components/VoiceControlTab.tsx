@@ -231,7 +231,7 @@ export const VoiceControlTab: React.FC<VoiceControlTabProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-800 text-amber-300 border border-emerald-600">
-                      {reciter.tajweedStyleBn}
+                      {reciter.badge}
                     </span>
                     {isSelected && (
                       <span className="flex items-center gap-1 text-[11px] font-bold text-amber-300">
@@ -244,17 +244,17 @@ export const VoiceControlTab: React.FC<VoiceControlTabProps> = ({
                   <h3 className="font-bold text-sm text-white">
                     {reciter.nameBn}
                   </h3>
-                  <p className="text-[11px] font-arabic text-emerald-300">
-                    {reciter.nameAr}
+                  <p className="text-[11px] text-emerald-300">
+                    {reciter.nameEn}
                   </p>
 
                   <p className="text-xs text-emerald-300/80 mt-1.5 line-clamp-2">
-                    {reciter.descriptionBn}
+                    {reciter.subtitleBn}
                   </p>
                 </div>
 
                 <div className="mt-2.5 pt-2 border-t border-emerald-800/60 flex items-center justify-between text-[10px] text-emerald-400">
-                  <span>উৎস: {reciter.countryBn}</span>
+                  <span>উৎস: {reciter.country}</span>
                   <span className="text-amber-400/90 font-mono">128 kbps MP3</span>
                 </div>
               </button>

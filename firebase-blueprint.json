@@ -47,6 +47,26 @@
         "updatedAt": { "type": "string" }
       },
       "required": ["userId", "scheduleName"]
+    },
+    "sitePromotions": {
+      "title": "Site Promotions & Ads",
+      "description": "Custom website promotion banner configured by admin for the top of HomeScreen",
+      "type": "object",
+      "properties": {
+        "websiteName": { "type": "string" },
+        "websiteUrl": { "type": "string" },
+        "tag": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "ctaText": { "type": "string" },
+        "bannerTheme": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "clickCount": { "type": "number" },
+        "impressionCount": { "type": "number" },
+        "updatedAt": { "type": "string" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["websiteName", "websiteUrl", "tag"]
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "ইসলামিক লাইফ ২৪/৭ - Islamic Life 24/7",
   "description": "বাংলাদেশের মুসলিমদের জন্য ২৪/৭ ইসলামিক জীবনযাত্রার পূর্ণাঙ্গ বাংলা অ্যাপ - নামাজের সময়সূচি, ৩টি ক্যালেন্ডার, কুরআন তিলাওয়াত, জিকির, কুইজ এবং ২৪/৭ AI কেয়ার, লাইফ ও রুটিন অপারেটিং সিস্টেম।",
-  "requestFramePermissions": ["geolocation", "microphone"],
+  "requestFramePermissions": ["geolocation", "microphone", "accelerometer", "gyroscope", "magnetometer"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
